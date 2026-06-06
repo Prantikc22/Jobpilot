@@ -1,4 +1,5 @@
 import "@/App.css";
+import "@/i18n";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -10,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import PricingCheckout from "@/pages/PricingCheckout";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
+import SharePage from "@/pages/SharePage";
 
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -27,6 +29,7 @@ function App() {
             <Route path="/pricing-checkout" element={<PricingCheckout />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/share/:token" element={<SharePage />} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-center" richColors closeButton />

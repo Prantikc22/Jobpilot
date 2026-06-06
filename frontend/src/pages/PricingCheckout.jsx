@@ -54,6 +54,13 @@ export default function PricingCheckout() {
               razorpay_signature: resp.razorpay_signature,
               plan: planId,
             });
+            // Track A/B conversion (best-effort)
+            try {
+              const variant = document.cookie.split("; ").find((c) => c.startsWith("jp_ab_pricing_copy="))?.split("=")[1];
+              if (variant) {
+                await api.post("/ab/track", { experiment: "pricing_copy", variant, event: "convert" });
+              }
+            } catch {}
             toast.success(`${planId.toUpperCase()} activated!`);
             setTimeout(() => nav("/dashboard"), 800);
           } catch (e) {

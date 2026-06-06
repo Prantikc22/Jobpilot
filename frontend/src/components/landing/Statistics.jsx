@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, animate } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 
 function AnimatedNumber({ to }) {
@@ -19,16 +20,17 @@ function AnimatedNumber({ to }) {
 }
 
 export default function Statistics() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({ applications_submitted: 50000, job_seekers: 8500, interviews: 2400, offers: 1200 });
   useEffect(() => {
     axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/activity/stats`).then(({ data }) => setStats(data)).catch(() => {});
   }, []);
 
   const items = [
-    { v: stats.applications_submitted, l: "Applications Submitted", s: "+" },
-    { v: stats.job_seekers, l: "Job Seekers Piloting", s: "+" },
-    { v: stats.interviews, l: "Interview Requests", s: "+" },
-    { v: stats.offers, l: "Offers Closed", s: "+" },
+    { v: stats.applications_submitted, l: t("stats.apps"), s: "+" },
+    { v: stats.job_seekers, l: t("stats.seekers"), s: "+" },
+    { v: stats.interviews, l: t("stats.interviews"), s: "+" },
+    { v: stats.offers, l: t("stats.offers"), s: "+" },
   ];
 
   return (
@@ -40,12 +42,12 @@ export default function Statistics() {
 
       <div className="relative max-w-7xl mx-auto px-6 md:px-8 text-white">
         <div className="max-w-3xl">
-          <span className="text-xs uppercase tracking-[0.24em] text-white/40 font-semibold">By the numbers</span>
+          <span className="text-xs uppercase tracking-[0.24em] text-white/40 font-semibold">{t("stats.label")}</span>
           <h2 className="font-display mt-3 text-4xl md:text-5xl lg:text-6xl tracking-[-0.03em] leading-[1.02] font-medium">
-            Receipts, not promises.
+            {t("stats.title")}
           </h2>
           <p className="mt-5 text-white/60 text-lg max-w-xl">
-            Every number below is the sum of real applications, real interviews, and real offers from JobPilot users.
+            {t("stats.sub")}
           </p>
         </div>
 

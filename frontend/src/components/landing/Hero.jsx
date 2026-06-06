@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Plane, Briefcase, Linkedin, Building2, Globe, Sparkles, ArrowUpRight, PlayCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const PLATFORMS = [
   { name: "LinkedIn", icon: Linkedin, color: "#0A66C2", angle: 0 },
@@ -64,6 +65,7 @@ function FloatingPlatformCard({ platform, index, radius, mx, my }) {
 }
 
 export default function Hero() {
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -107,7 +109,7 @@ export default function Hero() {
             className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/70 backdrop-blur px-3 py-1.5 text-xs text-zinc-600"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Now applying for 3,200+ professionals this week
+            {t("hero.badge")}
           </motion.div>
 
           <h1 className="font-display mt-6 text-[2.75rem] sm:text-6xl lg:text-[5.2rem] leading-[0.98] tracking-[-0.035em] font-medium text-zinc-900">
@@ -117,7 +119,7 @@ export default function Hero() {
               transition={{ duration: 0.7, delay: 0.05 }}
               className="block"
             >
-              Your Job Search.
+              {t("hero.title1")}
             </motion.span>
             <motion.span
               initial={{ opacity: 0, y: 20 }}
@@ -125,7 +127,7 @@ export default function Hero() {
               transition={{ duration: 0.7, delay: 0.18 }}
               className="block"
             >
-              <span className="jp-gradient-text">On Autopilot.</span>
+              <span className="jp-gradient-text">{t("hero.title2")}</span>
             </motion.span>
           </h1>
 
@@ -135,7 +137,7 @@ export default function Hero() {
             transition={{ duration: 0.7, delay: 0.32 }}
             className="mt-7 text-lg md:text-xl text-zinc-500 max-w-xl leading-relaxed"
           >
-            Upload your resume once. We find relevant jobs, tailor each application to your experience, and apply on your behalf — while you focus on interviews.
+            {t("hero.sub")}
           </motion.p>
 
           <motion.div
@@ -149,7 +151,7 @@ export default function Hero() {
               className="jp-btn-primary inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium"
               data-testid="hero-cta-primary"
             >
-              Start Applying Today
+              {t("hero.primary")}
               <ArrowUpRight className="w-4 h-4" />
             </Link>
             <a
@@ -158,7 +160,7 @@ export default function Hero() {
               data-testid="hero-cta-secondary"
             >
               <PlayCircle className="w-4 h-4" />
-              Watch Demo
+              {t("hero.secondary")}
             </a>
           </motion.div>
 
@@ -168,7 +170,7 @@ export default function Hero() {
             transition={{ delay: 0.8, duration: 0.8 }}
             className="mt-10 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold"
           >
-            <span>Trusted by candidates from</span>
+            <span>{t("hero.trustline")}</span>
             <span className="text-zinc-700">Google · Meta · Stripe · Razorpay · Atlassian</span>
           </motion.div>
         </div>

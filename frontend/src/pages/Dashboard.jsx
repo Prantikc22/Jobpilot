@@ -133,6 +133,10 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* AI Tools */}
           <div className="lg:col-span-1 space-y-4">
+            <SectionLabel>Share & invite</SectionLabel>
+            <ShareWidget profile={profile} />
+            <ReferralWidget />
+
             <SectionLabel>AI tools</SectionLabel>
             <AITool icon={Sparkles} title="AI Resume Optimizer" desc="Per-role rewrite + ATS uplift" busy={loadingAI === "opt"} onRun={() => runAI("opt", () => api.post("/ai/optimize-resume", {}).then(r => r.data), "Resume Optimizer")} testid="ai-resume-optimizer" />
             <AITool icon={FileText} title="ATS Checker" desc="Real ATS score + fixes" busy={loadingAI === "ats"} onRun={() => runAI("ats", () => api.post("/ai/ats-check").then(r => r.data), "ATS Checker")} testid="ai-ats-checker" />

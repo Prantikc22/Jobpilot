@@ -43,7 +43,9 @@ def _job_id(j: dict) -> str:
 async def recommendations(user=Depends(get_current_user), db=Depends(get_db)):
     user_doc = await db.users.find_one({"supabase_user_id": user["id"]}) or {}
     plan = user_doc.get("plan", "free")
-    limit = {"free": 10, "starter": 100, "pro": 300}.get(plan, 10)
+    base_limit = {"free": 10, "starter": 100, "pro": 300}.get(plan, 10)
+    bonus = int(user_doc.get("referral_credits", 0))
+    limit = base_limit + bonus
     rolesf = [r.lower() for r in user_doc.get("target_roles", [])]
     items: List[dict] = []
     for j in SEED_JOBS:
@@ -60,7 +62,7 @@ async def recommendations(user=Depends(get_current_user), db=Depends(get_db)):
             }
         )
     items.sort(key=lambda x: -x["match_score"])
-    return {"plan": plan, "limit": limit, "jobs": items[:limit]}
+    return {"plan": plan, "limit": limit, "base_limit": base_limit, "bonus": bonus, "jobs": items[:limit]}
 
 
 @router.post("/apply")

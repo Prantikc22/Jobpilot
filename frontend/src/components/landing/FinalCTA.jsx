@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function FinalCTA() {
+  const { t } = useTranslation();
   const ref = useRef(null);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -40,7 +42,7 @@ export default function FinalCTA() {
           className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/70 backdrop-blur"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Your pilot is one upload away
+          {t("finalCta.badge")}
         </motion.div>
 
         <motion.h2
@@ -50,9 +52,9 @@ export default function FinalCTA() {
           transition={{ duration: 0.8, delay: 0.1 }}
           className="font-display mt-7 text-[2.6rem] sm:text-6xl md:text-7xl lg:text-[5.6rem] leading-[0.98] tracking-[-0.035em] font-medium"
         >
-          Your dream job is{" "}
-          <span className="jp-gradient-text">closer</span>
-          <br /> than you think.
+          {t("finalCta.title1")}{" "}
+          <span className="jp-gradient-text">{t("finalCta.title2")}</span>
+          <br /> {t("finalCta.title3")}
         </motion.h2>
 
         <motion.p
@@ -62,7 +64,7 @@ export default function FinalCTA() {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="mt-7 text-white/65 text-lg max-w-2xl mx-auto"
         >
-          Stop applying. Start interviewing. Upload your resume once and let JobPilot apply on your behalf — only to roles that actually fit you.
+          {t("finalCta.sub")}
         </motion.p>
 
         <motion.div
@@ -77,7 +79,7 @@ export default function FinalCTA() {
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-[15px] font-medium bg-white text-zinc-900 hover:bg-zinc-100 transition-all"
             data-testid="final-cta-primary"
           >
-            Start Applying Today
+            {t("finalCta.primary")}
             <ArrowUpRight className="w-4 h-4" />
           </Link>
           <Link
@@ -85,12 +87,12 @@ export default function FinalCTA() {
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-[15px] font-medium border border-white/20 text-white hover:bg-white/5 transition-all"
             data-testid="final-cta-secondary"
           >
-            I already have an account
+            {t("finalCta.secondary")}
           </Link>
         </motion.div>
 
         <div className="mt-8 text-xs uppercase tracking-[0.2em] text-white/40 font-semibold">
-          No card required for free tier · Cancel anytime
+          {t("finalCta.footnote")}
         </div>
       </div>
     </section>

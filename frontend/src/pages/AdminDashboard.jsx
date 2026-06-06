@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plane, LogOut, Users, Briefcase, IndianRupee, Loader2, ShieldCheck, Search } from "lucide-react";
+import { Plane, LogOut, Users, Briefcase, IndianRupee, Loader2, ShieldCheck, Search, FlaskConical, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { adminApi } from "../lib/api";
 
@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [apps, setApps] = useState([]);
+  const [abStats, setAbStats] = useState(null);
   const [tab, setTab] = useState("overview");
   const [q, setQ] = useState("");
 
@@ -22,11 +23,13 @@ export default function AdminDashboard() {
       adminApi.get("/admin/users"),
       adminApi.get("/admin/orders"),
       adminApi.get("/admin/applications"),
-    ]).then(([a, b, c, d]) => {
+      adminApi.get("/ab/stats"),
+    ]).then(([a, b, c, d, e]) => {
       setStats(a.data);
       setUsers(b.data.users);
       setOrders(c.data.orders);
       setApps(d.data.applications);
+      setAbStats(e.data);
     }).catch(() => {
       toast.error("Session expired");
       localStorage.removeItem("jp_admin_token");
@@ -87,6 +90,7 @@ export default function AdminDashboard() {
             { k: "users", l: "Users" },
             { k: "orders", l: "Orders" },
             { k: "apps", l: "Applications" },
+            { k: "experiments", l: "Experiments" },
           ].map((t) => (
             <button
               key={t.k}
@@ -189,6 +193,38 @@ export default function AdminDashboard() {
               ))}
             </Table>
           </Panel>
+        )}
+
+        {tab === "experiments" && (
+          <div className="mt-6 space-y-5" data-testid="admin-experiments">
+            {abStats && Object.entries(abStats).map(([exp, breakdown]) => (
+              <Panel key={exp} title={`${exp} · A/B`} right={<FlaskConical className="w-4 h-4 text-zinc-400" />}>
+                <Table cols={["Variant", "Views", "Clicks", "Conversions", "CTR", "Conv. rate"]}>
+                  {Object.entries(breakdown).map(([variant, counts]) => (
+                    <tr key={variant} data-testid={`ab-row-${exp}-${variant}`}>
+                      <td className="py-2.5 text-sm font-semibold">
+                        <span className={`inline-flex items-center gap-2`}>
+                          <span className={`w-2 h-2 rounded-full ${variant === "A" ? "bg-blue-500" : "bg-violet-500"}`} />
+                          Variant {variant}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-sm">{counts.view || 0}</td>
+                      <td className="py-2.5 text-sm">{counts.click || 0}</td>
+                      <td className="py-2.5 text-sm">{counts.convert || 0}</td>
+                      <td className="py-2.5 text-sm flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 text-emerald-500" />{counts.click_rate || 0}%</td>
+                      <td className="py-2.5 text-sm">{counts.convert_rate || 0}%</td>
+                    </tr>
+                  ))}
+                  {Object.keys(breakdown).length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-sm text-zinc-400">No events yet — visit /#pricing to log views.</td>
+                    </tr>
+                  )}
+                </Table>
+              </Panel>
+            ))}
+            {!abStats && <div className="text-sm text-zinc-500">Loading…</div>}
+          </div>
         )}
       </div>
     </div>

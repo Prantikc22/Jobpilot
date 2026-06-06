@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 2 testing complete. All new features (A/B variant + tracking + admin stats, referrals system with +25 credits, public share + OG image generation at 1200x630, /api/jobs/recommendations bonus from referral_credits, backfill of referral_code/pricing_variant on /api/users/me) work end-to-end. 17/17 NEW backend tests pass. Frontend i18n switcher (EN/HI/ES) renders Hindi 'आपकी नौकरी की खोज' and Spanish 'Tu búsqueda de empleo' correctly. Pricing section exposes data-ab-variant + matching copy. SignUp ?ref= banner shows. Admin Experiments tab renders A/B counters with CTR/CVR. Public /share/:token page renders with correct og:image, og:title, twitter:card meta tags. Iteration-1 regressions also verified — payments/verify now rejects forged/cross-user orders (404/403), admin plan-change returns 404 on missing user.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/payments/verify", "issue": "When given a non-existent order_id the route returns 404 (order not found) BEFORE the ownership check. Functionally safe (prevents upgrade either way) but the iter-1 'enforce ownership' test in test_authenticated.py (which used 'order_FAKE') was previously asserting 400 and now sees 404 — update the assertion. Behavior is correct."},
+      {"endpoint": "GET /api/ab/variant/{exp}", "issue": "For unknown experiments returns 200 with variant='A' instead of 404. Acceptable graceful fallback but worth documenting."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_new_features.py",
+    "/app/test_reports/pytest/pytest_new_features.xml",
+    "/app/test_reports/pytest/pytest_regression.xml"
+  ],
+  "action_items": [
+    "Update stale assertions in /app/backend/tests/test_api.py::test_admin_change_plan_valid and /app/backend/tests/test_authenticated.py::test_verify_invalid_signature — both now correctly return 404 due to iter-1 fixes (admin plan 404 + payments/verify order-lookup-first). Change `assert r.status_code == 200/400` to 404 in those two stale tests, OR seed the test user before plan-change.",
+    "Optional: in admin Experiments tab, consider showing a 'no data yet' empty state when no events recorded for an experiment (currently only renders the table when entries exist)."
+  ],
+  "critical_code_review_comments": [
+    "/api/ab/variant/{exp}: always logs 'view' event including on cookie-sticky repeat calls — inflates view counts on page refresh. Consider dedup by session or only log on first cookie issuance.",
+    "/api/referrals/apply: returns referrer_email_hint that leaks part of referrer's email ('abc***'). Minor PII leak — consider removing this field or making it opt-in.",
+    "/api/share/create: snapshot stats are captured at creation time but the field name in storage is 'created_at' — repeated creates will keep stacking docs in db.shares with no GC. Consider one-share-per-user upsert or TTL.",
+    "/api/share/{token}/og.png: re-renders the PIL image on every request (no caching). Cache-Control:public,max-age=86400 is set so browser/CDN will cache, but the server itself recomputes. For scale, persist the PNG once at create time or cache in Mongo/blob.",
+    "routes/ab.py: experiment copy strings live in code rather than DB — to iterate copy you must redeploy. Fine for MVP."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_new_features.py (NEW - 17 tests covering A/B, referrals, share+OG, recommendations bonus, iter-1 regressions)"
+  ],
+  "success_rate": {"backend": "100% on new features (17/17). Regression suite 36/38 — the 2 failures are STALE assertions reflecting iter-1 fixes (admin 404, payments order-not-found), not real bugs.", "frontend": "100% on requested flows (i18n EN/HI/ES verified, pricing data-ab-variant + matching copy, signup ref banner, admin Experiments tab rendering A/B counters table, public /share/:token with correct og:image+og:title+twitter:card meta)"},
+  "test_credentials": "Admin: admin@jobpilot.ai / JobPilot@2026. Supabase test users created+deleted per test module (testpilot+<ts>_<uid>@jobpilot.ai pattern).",
+  "seed_data_creation": "Per-run: 2 Supabase users (UserA, UserB) for referral chain + 1 separate user for the SharePage UI test. All deleted in teardown except possibly the SharePage one if cleanup races. Created a few starter/pro orders for the ownership-enforcement test and several ab_events docs (visible in admin Experiments table: Variant A=7v/1c/0conv, Variant B=7v/0c/1conv).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All new iter-2 features are GREEN. The only outstanding item is two stale assertions in the iter-1 test files that should now expect 404 instead of 200/400 — these reflect correct fixes the main agent already shipped. Do NOT 'fix' the backend to make them 200/400 again; update the test assertions instead. For OG image work, the PNG is correctly 1200x630 with valid PNG signature and Pillow-rendered branding. SharePage uses react-helmet-async or direct document.head manipulation — meta tags are present in DOM at /share/{token}. Avoid running test_new_features.py back-to-back too quickly because Supabase free tier rate-limits admin user creation.",
+  "rca of the issue": "N/A — no blocking issues. The two regression-suite failures are stale-assertion artifacts: test_admin_change_plan_valid in /app/backend/tests/test_api.py uses a random UUID that does not correspond to a real user; the iter-1 fix correctly raises 404 on no-match (per iter-1 action item), so the assertion `r.status_code == 200` is wrong. Similarly test_verify_invalid_signature posts order_FAKE which doesn't exist in mongo — the payments/verify route now does an order lookup first (so ownership can be enforced) and raises 404 'Order not found' before reaching signature verification, so the test should expect 404 (or seed a real order)."
+}

@@ -1,17 +1,31 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader2, MailCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowRight, Loader2, MailCheck, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
+import { api } from "../lib/api";
 import { AuthShell, Field } from "./SignIn";
 
 export default function SignUp() {
+  const [searchParams] = useSearchParams();
+  const refCodeFromUrl = (searchParams.get("ref") || "").toUpperCase();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
+  const [refCode, setRefCode] = useState(refCodeFromUrl);
   const [loading, setLoading] = useState(false);
   const [verifySent, setVerifySent] = useState(false);
   const nav = useNavigate();
+
+  const applyReferralIfAny = async () => {
+    if (!refCode.trim()) return;
+    try {
+      await api.post("/referrals/apply", { code: refCode.trim().toUpperCase() });
+      toast.success("Referral code applied 🎁");
+    } catch {
+      // silent — non-blocking
+    }
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -27,6 +41,7 @@ export default function SignUp() {
       return;
     }
     if (data?.session) {
+      await applyReferralIfAny();
       setLoading(false);
       toast.success("Welcome to JobPilot");
       nav("/onboarding");
@@ -34,10 +49,12 @@ export default function SignUp() {
     }
     // No session — Supabase project requires email confirm. Try direct sign-in once (if confirm is OFF this works).
     const { error: e2 } = await supabase.auth.signInWithPassword({ email, password: pwd });
-    setLoading(false);
     if (!e2) {
+      await applyReferralIfAny();
+      setLoading(false);
       nav("/onboarding");
     } else {
+      setLoading(false);
       // Show verify-email screen
       setVerifySent(true);
     }
@@ -82,6 +99,12 @@ export default function SignUp() {
         <Field label="Full name" value={fullName} onChange={setFullName} required testid="signup-name" />
         <Field label="Work email" type="email" value={email} onChange={setEmail} required testid="signup-email" />
         <Field label="Password" type="password" value={pwd} onChange={setPwd} required testid="signup-password" />
+        {(refCodeFromUrl || refCode) && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs" data-testid="signup-ref-banner">
+            <Gift className="w-3.5 h-3.5" />
+            <span>Referral code <span className="font-mono font-semibold">{refCode}</span> will be applied</span>
+          </div>
+        )}
         <button
           type="submit"
           disabled={loading}

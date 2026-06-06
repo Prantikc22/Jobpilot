@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { Plane } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
+import LanguageSwitcher from "../LanguageSwitcher";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 24));
 
@@ -35,13 +38,14 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 text-sm text-zinc-600">
-          <a href="#story" className="jp-link" data-testid="nav-story">How it works</a>
-          <a href="#features" className="jp-link" data-testid="nav-features">Features</a>
-          <a href="#pricing" className="jp-link" data-testid="nav-pricing">Pricing</a>
-          <a href="#activity" className="jp-link" data-testid="nav-activity">Live</a>
+          <a href="#story" className="jp-link" data-testid="nav-story">{t("nav.story")}</a>
+          <a href="#features" className="jp-link" data-testid="nav-features">{t("nav.features")}</a>
+          <a href="#pricing" className="jp-link" data-testid="nav-pricing">{t("nav.pricing")}</a>
+          <a href="#activity" className="jp-link" data-testid="nav-activity">{t("nav.live")}</a>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <LanguageSwitcher />
           {user ? (
             <>
               <button
@@ -49,14 +53,14 @@ export default function Navbar() {
                 className="hidden sm:inline-flex items-center text-sm px-3 py-2 rounded-full text-zinc-700 hover:text-zinc-900"
                 data-testid="nav-dashboard"
               >
-                Dashboard
+                {t("nav.dashboard")}
               </button>
               <button
                 onClick={async () => { await signOut(); navigate("/"); }}
                 className="text-sm px-4 py-2 rounded-full jp-btn-primary"
                 data-testid="nav-signout"
               >
-                Sign out
+                {t("nav.signout")}
               </button>
             </>
           ) : (
@@ -66,14 +70,14 @@ export default function Navbar() {
                 className="hidden sm:inline-flex items-center text-sm px-3 py-2 rounded-full text-zinc-700 hover:text-zinc-900"
                 data-testid="nav-signin"
               >
-                Sign in
+                {t("nav.signin")}
               </Link>
               <Link
                 to="/signup"
                 className="text-sm px-4 py-2 rounded-full jp-btn-primary"
                 data-testid="nav-get-started"
               >
-                Start Applying
+                {t("nav.start")}
               </Link>
             </>
           )}

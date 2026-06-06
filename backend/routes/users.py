@@ -23,11 +23,30 @@ class OnboardingPayload(BaseModel):
     onboarding_completed: Optional[bool] = None
 
 
+def _generate_ref_code(email: str | None) -> str:
+    import secrets, string
+    base = (email or "").split("@")[0][:6].upper() or "PILOT"
+    base = "".join(c for c in base if c.isalnum()) or "PILOT"
+    suffix = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+    return f"{base}-{suffix}"
+
+
 async def _ensure_user(db, sb_user: dict) -> dict:
     uid = sb_user["id"]
     doc = await db.users.find_one({"supabase_user_id": uid}, {"_id": 0})
     if doc:
+        # Backfill referral_code / pricing_variant for users created before these features
+        patch = {}
+        if not doc.get("referral_code"):
+            patch["referral_code"] = _generate_ref_code(doc.get("email"))
+        if not doc.get("pricing_variant"):
+            import secrets
+            patch["pricing_variant"] = "A" if secrets.randbelow(2) == 0 else "B"
+        if patch:
+            await db.users.update_one({"supabase_user_id": uid}, {"$set": patch})
+            doc.update(patch)
         return doc
+    import secrets
     new_doc = {
         "supabase_user_id": uid,
         "email": sb_user.get("email"),
@@ -50,6 +69,10 @@ async def _ensure_user(db, sb_user: dict) -> dict:
         "offers_count": 0,
         "onboarding_step": 1,
         "onboarding_completed": False,
+        "referral_code": _generate_ref_code(sb_user.get("email")),
+        "referred_by_code": None,
+        "referral_credits": 0,  # bonus applications credited from referrals
+        "pricing_variant": "A" if secrets.randbelow(2) == 0 else "B",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }

@@ -1,0 +1,86 @@
+{
+  "nav": {
+    "story": "Cómo funciona",
+    "features": "Funciones",
+    "pricing": "Precios",
+    "live": "En vivo",
+    "signin": "Iniciar sesión",
+    "start": "Empezar",
+    "dashboard": "Panel",
+    "signout": "Cerrar sesión"
+  },
+  "hero": {
+    "badge": "Aplicando para 3,200+ profesionales esta semana",
+    "title1": "Tu búsqueda de empleo.",
+    "title2": "En piloto automático.",
+    "sub": "Sube tu CV una vez. Encontramos puestos relevantes, adaptamos cada postulación a tu experiencia y aplicamos por ti — mientras tú te concentras en las entrevistas.",
+    "primary": "Empezar a aplicar hoy",
+    "secondary": "Ver demo",
+    "trustline": "Confiado por candidatos de"
+  },
+  "story": {
+    "label": "La historia",
+    "title1": "Cinco pasos.",
+    "title2": "Cero postulaciones tuyas.",
+    "acts": [
+      { "title": "Subes tu CV — una sola vez.", "sub": "PDF o DOCX. Extraemos cada señal: habilidades, nivel, dominios." },
+      { "title": "Nuestra IA lo lee como un reclutador.", "sub": "Habilidades, logros, salario y preferencias se vuelven inteligencia estructurada." },
+      { "title": "Postulaciones a medida salen.", "sub": "Cada vacante se compara con tu experiencia y se genera una carta única." },
+      { "title": "Los reclutadores te contactan.", "sub": "Las invitaciones llegan a tu bandeja mientras te preparas — no aplicas." },
+      { "title": "Cierras la oferta.", "sub": "El puesto soñado que no tenías tiempo de aplicar te encontró." }
+    ]
+  },
+  "features": {
+    "label": "Funciones",
+    "title": "Un equipo de carrera en tu bolsillo.",
+    "sub": "Auto Apply es el motor. Lo demás te hace irresistible para los reclutadores.",
+    "auto": { "label": "La pieza central", "title": "Agente Auto Apply", "sub": "Un agente 24/7 que busca, adapta y envía postulaciones en LinkedIn, Indeed, Wellfound, Glassdoor y Workday." },
+    "items": {
+      "builder": { "title": "Constructor de CV", "desc": "Plantillas hermosas y ATS-friendly en segundos." },
+      "optimizer": { "title": "Optimizador de CV", "desc": "Reescritura por rol para que cada palabra clave coincida." },
+      "ats": { "title": "Verificador ATS", "desc": "Puntuación ATS real + correcciones línea por línea." },
+      "linkedin": { "title": "Optimizador LinkedIn", "desc": "Titular, Acerca de, Habilidades — reescritos." },
+      "shield": { "title": "Career Shield", "desc": "Pausamos automáticamente roles de bajo ajuste." },
+      "tracker": { "title": "Rastreador", "desc": "Cada envío, respuesta y entrevista en una sola línea." }
+    }
+  },
+  "activity": {
+    "label": "En vivo · ahora",
+    "title1": "Gente siendo contratada,",
+    "title2": "mientras lees esto.",
+    "sub": "Resultados reales de pilotos activos. Sin scripts — solo recibos.",
+    "active": "3,200+ pilotos activos esta semana"
+  },
+  "stats": {
+    "label": "En cifras",
+    "title": "Recibos, no promesas.",
+    "sub": "Cada cifra abajo suma postulaciones, entrevistas y ofertas reales.",
+    "apps": "Postulaciones Enviadas",
+    "seekers": "Pilotos Activos",
+    "interviews": "Solicitudes de Entrevista",
+    "offers": "Ofertas Cerradas"
+  },
+  "pricing": {
+    "label": "Precios",
+    "headline_a": "Postulaciones dirigidas.",
+    "subhead_a": "Nunca spam.",
+    "tagline_a": "Cada postulación se ajusta a tu experiencia, habilidades, ubicación, salario y autorización laboral.",
+    "headline_b": "Tu cazador IA.",
+    "subhead_b": "Siempre activo.",
+    "tagline_b": "No disparamos CVs. Enviamos postulaciones que valen el tiempo del reclutador — y el tuyo.",
+    "popular": "Más popular",
+    "starter": { "name": "Starter", "desc": "Pon el motor en marcha. Postulaciones dirigidas todos los días.", "cta": "Empezar con Starter" },
+    "pro": { "name": "Pro", "desc": "Máximo apalancamiento. Pilotos prioritarios y Career Shield.", "cta": "Mejorar a Pro" },
+    "free": "¿Probar primero? Comienza gratis — 10 trabajos al mes, actualización de CV con IA, optimizador de LinkedIn."
+  },
+  "finalCta": {
+    "badge": "Tu piloto está a una subida",
+    "title1": "Tu trabajo soñado está",
+    "title2": "más cerca",
+    "title3": "de lo que crees.",
+    "sub": "Deja de aplicar. Empieza a entrevistar. Sube tu CV una vez y deja que JobPilot aplique por ti — solo a roles que realmente encajen.",
+    "primary": "Empezar a aplicar hoy",
+    "secondary": "Ya tengo cuenta",
+    "footnote": "No se requiere tarjeta para el tier gratuito · Cancela cuando quieras"
+  }
+}

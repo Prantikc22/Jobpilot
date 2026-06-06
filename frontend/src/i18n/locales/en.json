@@ -1,0 +1,86 @@
+{
+  "nav": {
+    "story": "How it works",
+    "features": "Features",
+    "pricing": "Pricing",
+    "live": "Live",
+    "signin": "Sign in",
+    "start": "Start Applying",
+    "dashboard": "Dashboard",
+    "signout": "Sign out"
+  },
+  "hero": {
+    "badge": "Now applying for 3,200+ professionals this week",
+    "title1": "Your Job Search.",
+    "title2": "On Autopilot.",
+    "sub": "Upload your resume once. We find relevant jobs, tailor each application to your experience, and apply on your behalf — while you focus on interviews.",
+    "primary": "Start Applying Today",
+    "secondary": "Watch Demo",
+    "trustline": "Trusted by candidates from"
+  },
+  "story": {
+    "label": "The story",
+    "title1": "Five steps.",
+    "title2": "Zero applications by you.",
+    "acts": [
+      { "title": "You upload your resume — once.", "sub": "PDF or DOCX. We extract every signal: skills, seniority, domains, and verified experience." },
+      { "title": "Our AI reads it like a recruiter.", "sub": "Skills, achievements, salary fit and location preferences become structured intelligence." },
+      { "title": "Tailored applications go out.", "sub": "Every job is matched against your experience, then a unique cover letter is generated and submitted." },
+      { "title": "Recruiters reach out.", "sub": "Interview invites land in your inbox while you focus on prep — not the application grind." },
+      { "title": "You close the offer.", "sub": "The dream role you didn't have time to apply to? It just found you." }
+    ]
+  },
+  "features": {
+    "label": "Features",
+    "title": "A career team in your pocket.",
+    "sub": "Auto Apply is the engine. Everything else makes it irresistible to recruiters.",
+    "auto": { "label": "The Centerpiece", "title": "Auto Apply Agent", "sub": "A 24/7 agent that hunts, tailors and submits applications across LinkedIn, Indeed, Wellfound, Glassdoor and Workday — matched to your skills, location, salary and work authorization." },
+    "items": {
+      "builder": { "title": "Resume Builder", "desc": "Beautiful ATS-friendly templates generated from your existing resume in seconds." },
+      "optimizer": { "title": "Resume Optimizer", "desc": "Per-role rewriting so every keyword matches." },
+      "ats": { "title": "ATS Checker", "desc": "Real ATS scoring + line-by-line fixes." },
+      "linkedin": { "title": "LinkedIn Optimizer", "desc": "Headline, About, Skills — rewritten." },
+      "shield": { "title": "Career Shield", "desc": "We monitor outcomes and pause low-fit roles automatically." },
+      "tracker": { "title": "Application Tracker", "desc": "Every submission, response, and interview in one timeline." }
+    }
+  },
+  "activity": {
+    "label": "Live · right now",
+    "title1": "People getting hired,",
+    "title2": "while you read this.",
+    "sub": "Real outcomes streaming from our active pilots. No screenshots, no scripts — just receipts.",
+    "active": "3,200+ pilots active this week"
+  },
+  "stats": {
+    "label": "By the numbers",
+    "title": "Receipts, not promises.",
+    "sub": "Every number below is the sum of real applications, real interviews, and real offers from JobPilot users.",
+    "apps": "Applications Submitted",
+    "seekers": "Job Seekers Piloting",
+    "interviews": "Interview Requests",
+    "offers": "Offers Closed"
+  },
+  "pricing": {
+    "label": "Pricing",
+    "headline_a": "Targeted applications.",
+    "subhead_a": "Never spam.",
+    "tagline_a": "Every application is matched to your experience, skills, preferred locations, salary expectations and work authorization. Quality over volume — always.",
+    "headline_b": "Your AI hunter.",
+    "subhead_b": "Always on.",
+    "tagline_b": "We don't blast resumes. We submit applications worth the recruiter's time — and yours.",
+    "popular": "Most popular",
+    "starter": { "name": "Starter", "desc": "Get the engine running. Targeted applications, every single day.", "cta": "Start with Starter" },
+    "pro": { "name": "Pro", "desc": "Highest leverage. Priority pilots and Career Shield protection.", "cta": "Upgrade to Pro" },
+    "free": "Want to try first? Start free — 10 matched jobs/month, AI resume update, LinkedIn optimizer. No auto-apply."
+  },
+  "finalCta": {
+    "badge": "Your pilot is one upload away",
+    "title1": "Your dream job is",
+    "title2": "closer",
+    "title3": "than you think.",
+    "sub": "Stop applying. Start interviewing. Upload your resume once and let JobPilot apply on your behalf — only to roles that actually fit you.",
+    "primary": "Start Applying Today",
+    "secondary": "I already have an account",
+    "footnote": "No card required for free tier · Cancel anytime"
+  }
+}
