@@ -26,6 +26,7 @@ from routes.admin import router as admin_router
 from routes.referrals import router as referrals_router
 from routes.share import router as share_router
 from routes.ab import router as ab_router
+from routes.auth import router as auth_router
 
 app = FastAPI(title="JobPilot API", version="1.0.0")
 
@@ -58,6 +59,7 @@ api_router.include_router(admin_router)
 api_router.include_router(referrals_router)
 api_router.include_router(share_router)
 api_router.include_router(ab_router)
+api_router.include_router(auth_router)
 
 app.include_router(api_router)
 
