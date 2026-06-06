@@ -176,39 +176,188 @@ function ResumeUploadVisual() {
 }
 
 function AIScanVisual() {
-  const skills = ["Python", "React", "AWS", "Kubernetes", "TypeScript", "GraphQL", "PostgreSQL", "ML Ops"];
-  const SIZE = 380; // container size
-  const RING_RADIUS = (SIZE - 96) / 2; // inset-12 = 48px on each side -> ring radius ≈ 142
+  const skills = [
+    { name: "Python",     color: "#3b82f6" },
+    { name: "React",      color: "#06b6d4" },
+    { name: "AWS",        color: "#f59e0b" },
+    { name: "Kubernetes", color: "#8b5cf6" },
+    { name: "TypeScript", color: "#0ea5e9" },
+    { name: "GraphQL",    color: "#ec4899" },
+    { name: "PostgreSQL", color: "#10b981" },
+    { name: "ML Ops",     color: "#f43f5e" },
+  ];
+  const SIZE = 460;
+  const CENTER = SIZE / 2;
+  const RING_RADIUS = 180;
+
   return (
     <div className="relative w-full h-full flex items-center justify-center">
       <div className="relative" style={{ width: SIZE, height: SIZE }}>
+        {/* Soft halo */}
+        <div className="absolute inset-12 rounded-full bg-gradient-to-br from-blue-100/60 via-violet-100/50 to-rose-100/40 blur-2xl" />
+
+        {/* Resume card on the LEFT (the source) */}
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-12 rounded-full border-2 border-dashed border-zinc-200"
-        />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full jp-conic p-[1.5px]">
-          <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-zinc-900" />
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="absolute -left-2 top-1/2 -translate-y-1/2 z-30"
+        >
+          <div className="jp-card rounded-xl p-3 w-[110px] shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-6 rounded-sm bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
+                <FileText className="w-2.5 h-2.5 text-rose-600" />
+              </div>
+              <div className="text-[9px] font-semibold text-zinc-800 leading-tight">Resume.pdf</div>
+            </div>
+            <div className="mt-2 space-y-1">
+              {[80, 60, 90, 70].map((w, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 1.6, delay: i * 0.15, repeat: Infinity }}
+                  className="h-1 rounded-full bg-zinc-200"
+                  style={{ width: `${w}%` }}
+                />
+              ))}
+            </div>
+            {/* Scan line traveling down */}
+            <motion.div
+              animate={{ y: ["0%", "260%", "0%"] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute left-1 right-1 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent"
+              style={{ top: 30 }}
+            />
           </div>
-        </div>
+        </motion.div>
+
+        {/* SVG: rotating orbital ring + connection lines + traveling skill particles */}
+        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="absolute inset-0 w-full h-full">
+          <defs>
+            <radialGradient id="scanGlow" r="50%">
+              <stop offset="0" stopColor="#3b82f6" stopOpacity="0.3" />
+              <stop offset="0.6" stopColor="#8b5cf6" stopOpacity="0.1" />
+              <stop offset="1" stopColor="#ec4899" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="scanLine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#9ca3af" stopOpacity="0" />
+              <stop offset="0.5" stopColor="#9ca3af" stopOpacity="0.5" />
+              <stop offset="1" stopColor="#9ca3af" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Glow behind center */}
+          <circle cx={CENTER} cy={CENTER} r="90" fill="url(#scanGlow)" />
+
+          {/* Rotating orbit (animated via SMIL) */}
+          <g style={{ transformOrigin: `${CENTER}px ${CENTER}px` }}>
+            <animateTransform attributeName="transform" type="rotate" from={`0 ${CENTER} ${CENTER}`} to={`360 ${CENTER} ${CENTER}`} dur="40s" repeatCount="indefinite" />
+            <circle cx={CENTER} cy={CENTER} r={RING_RADIUS} fill="none" stroke="#d4d4d8" strokeWidth="1" strokeDasharray="4 6" opacity="0.7" />
+          </g>
+
+          {/* Pulsing scan rings emanating from center */}
+          {[0, 1, 2].map((i) => (
+            <circle
+              key={i}
+              cx={CENTER}
+              cy={CENTER}
+              r="50"
+              fill="none"
+              stroke="#3b82f6"
+              strokeWidth="1"
+              opacity="0"
+            >
+              <animate attributeName="r" from="50" to={RING_RADIUS} dur="3s" begin={`${i * 1}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0;0.4;0" dur="3s" begin={`${i * 1}s`} repeatCount="indefinite" />
+            </circle>
+          ))}
+
+          {/* Connection lines + traveling skill particles from center to each skill */}
+          {skills.map((s, i) => {
+            const angle = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
+            const ex = CENTER + Math.cos(angle) * RING_RADIUS;
+            const ey = CENTER + Math.sin(angle) * RING_RADIUS;
+            const pathId = `scan-path-${i}`;
+            return (
+              <g key={s.name}>
+                <path id={pathId} d={`M ${CENTER} ${CENTER} L ${ex} ${ey}`} stroke="url(#scanLine)" strokeWidth="1" fill="none" />
+                <circle r="3" fill={s.color}>
+                  <animateMotion dur={`${3 + i * 0.2}s`} repeatCount="indefinite" begin={`${i * 0.4}s`}>
+                    <mpath href={`#${pathId}`} />
+                  </animateMotion>
+                  <animate attributeName="opacity" values="0;1;1;0" dur={`${3 + i * 0.2}s`} repeatCount="indefinite" begin={`${i * 0.4}s`} />
+                </circle>
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Central AI brain - bigger, more prominent */}
+        <motion.div
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[120px] h-[120px] z-20"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 rounded-full jp-conic p-[2px]"
+          />
+          <div className="absolute inset-1 rounded-full bg-white flex items-center justify-center shadow-[0_20px_60px_-12px_rgba(15,23,42,0.25)]">
+            <motion.div
+              animate={{ scale: [1, 1.12, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Sparkles className="w-10 h-10 text-zinc-900" />
+            </motion.div>
+          </div>
+          {/* Inner ping */}
+          <motion.div
+            animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-3 rounded-full border-2 border-blue-400/50"
+          />
+        </motion.div>
+
+        {/* Skill chips placed ON the orbital ring */}
         {skills.map((s, i) => {
-          const a = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
-          const x = Math.cos(a) * RING_RADIUS;
-          const y = Math.sin(a) * RING_RADIUS;
+          const angle = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
+          const x = Math.cos(angle) * RING_RADIUS;
+          const y = Math.sin(angle) * RING_RADIUS;
           return (
             <motion.div
-              key={s}
+              key={s.name}
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 * i, duration: 0.5 }}
+              transition={{ delay: 0.4 + i * 0.08, duration: 0.5 }}
               style={{ left: "50%", top: "50%", x, y }}
-              className="absolute -translate-x-1/2 -translate-y-1/2 jp-glass px-2.5 py-1 rounded-full text-xs font-medium text-zinc-700 whitespace-nowrap"
+              className="absolute -translate-x-1/2 -translate-y-1/2 z-30"
             >
-              {s}
+              <motion.div
+                animate={{ y: [0, -3, 0] }}
+                transition={{ duration: 3, delay: i * 0.2, repeat: Infinity, ease: "easeInOut" }}
+                className="jp-glass px-2.5 py-1.5 rounded-full text-xs font-medium text-zinc-800 whitespace-nowrap flex items-center gap-1.5 shadow-md"
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+                {s.name}
+              </motion.div>
             </motion.div>
           );
         })}
+
+        {/* Status pill */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+          className="absolute left-1/2 bottom-2 -translate-x-1/2 z-30"
+        >
+          <div className="jp-glass rounded-full px-3 py-1.5 flex items-center gap-2 text-[11px] font-medium text-zinc-700">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-mono">8 skills · 12 keywords · ATS 94</span>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
