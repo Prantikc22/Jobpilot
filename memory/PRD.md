@@ -21,14 +21,6 @@ Build JobPilot - a premium, cinematic landing page + full SaaS for an autonomous
 ## What's been implemented (2026-02-06)
 
 ### Landing page (world-class)
-- Cinematic hero with floating 3D dashboard, orbiting platform cards, animated paper airplane, animated gradient headline
-- 5-act scroll storytelling (Resume Upload → AI Scan → Pipeline → Calendar → Offer)
-- Premium Bento Grid features (Auto Apply centerpiece + 6 satellites)
-- Live activity feed with real-time AnimatePresence stacking
-- Dark luxury statistics section with animated counters + blurred beams
-- 2-tier pricing (Starter ₹499, Pro ₹999) emphasising targeted matching
-- Final dark CTA with mouse-parallax orbs
-- Glass nav, custom font pairing (Cabinet Grotesk + Satoshi)
 
 ### Auth + Onboarding
 - Supabase email/password sign up & sign in

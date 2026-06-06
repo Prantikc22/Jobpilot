@@ -37,22 +37,25 @@ async def get_variant(experiment: str, request: Request, response: Response, db=
         return {"variant": "A", "copy": EXPERIMENTS["pricing_copy"]["A"]}
     # Use cookie for stickiness
     cookie_key = f"jp_ab_{experiment}"
-    variant = request.cookies.get(cookie_key)
-    if variant not in EXPERIMENTS[experiment]:
+    existing_variant = request.cookies.get(cookie_key)
+    is_first_visit = existing_variant not in EXPERIMENTS[experiment]
+    if is_first_visit:
         variant = "A" if secrets.randbelow(2) == 0 else "B"
         response.set_cookie(cookie_key, variant, max_age=60 * 60 * 24 * 60, samesite="lax")
-    # Log view
-    try:
-        await db.ab_events.insert_one(
-            {
-                "experiment": experiment,
-                "variant": variant,
-                "event": "view",
-                "at": datetime.now(timezone.utc).isoformat(),
-            }
-        )
-    except Exception:
-        pass
+        # Log a 'view' event only on FIRST cookie issuance (avoid inflating on refresh)
+        try:
+            await db.ab_events.insert_one(
+                {
+                    "experiment": experiment,
+                    "variant": variant,
+                    "event": "view",
+                    "at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+        except Exception:
+            pass
+    else:
+        variant = existing_variant
     return {"variant": variant, "copy": EXPERIMENTS[experiment][variant]}
 
 

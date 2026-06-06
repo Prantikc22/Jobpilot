@@ -41,7 +41,7 @@ async def apply_ref(body: ApplyRef, user=Depends(get_current_user), db=Depends(g
         {"supabase_user_id": referrer["supabase_user_id"]},
         {"$inc": {"referral_credits": REFERRAL_CREDIT}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}},
     )
-    return {"ok": True, "referrer_email_hint": (referrer.get("email") or "")[:3] + "***"}
+    return {"ok": True}
 
 
 @router.get("/mine")
