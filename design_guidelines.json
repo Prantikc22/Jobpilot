@@ -1,0 +1,149 @@
+{
+  "project_name": "JobPilot",
+  "domain": "SaaS / Career Productivity",
+  "theme": "light",
+  "archetype": "4",
+  "archetype_name": "Swiss & High-Contrast / Luxury Tech Hybrid",
+  "design_philosophy": "A cinematic, premium, product-led narrative. Feels like an amalgamation of Stripe, Linear, Apple, and Vercel. We avoid flat SaaS templates and generic purple AI themes. We rely on pristine white luxury backgrounds, deep sophisticated shadows, frosted glass panels (Crystal Glassmorphism), and dark blue accents for authority. Heavy Framer Motion integration for storytelling, parallax, and depth.",
+  "colors": {
+    "background": {
+      "primary": "#FFFFFF",
+      "secondary": "#FAFAFA",
+      "tertiary": "#F4F4F5",
+      "dark_accent": "#0A0F1C",
+      "dark_accent_deep": "#040810"
+    },
+    "text": {
+      "primary": "#09090B",
+      "secondary": "#52525B",
+      "tertiary": "#A1A1AA",
+      "inverse": "#FFFFFF",
+      "inverse_muted": "#A1A1AA"
+    },
+    "brand": {
+      "primary": "#09090B",
+      "accent_gradient_start": "#3B82F6",
+      "accent_gradient_end": "#8B5CF6",
+      "success": "#10B981",
+      "border_subtle": "rgba(0, 0, 0, 0.08)",
+      "glass_border": "rgba(255, 255, 255, 0.4)"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Cabinet Grotesk",
+      "body": "Satoshi",
+      "mono": "JetBrains Mono",
+      "fallbacks": "system-ui, -apple-system, sans-serif"
+    },
+    "rules": {
+      "h1": "text-5xl sm:text-6xl lg:text-[5rem] tracking-tighter leading-[1.1] font-medium",
+      "h2": "text-3xl sm:text-4xl lg:text-5xl tracking-tight leading-tight font-medium",
+      "h3": "text-xl sm:text-2xl tracking-tight font-medium",
+      "body": "text-base lg:text-lg leading-relaxed text-zinc-500",
+      "labels": "text-xs tracking-[0.2em] uppercase font-semibold text-zinc-400"
+    }
+  },
+  "surface_strategies": {
+    "crystal_glass": {
+      "usage": "Sticky headers, floating navs, overlaid dashboard cards in hero.",
+      "classes": "bg-white/60 backdrop-blur-2xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)]"
+    },
+    "premium_card": {
+      "usage": "Bento grid items, feature sections.",
+      "classes": "bg-white border border-zinc-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 rounded-2xl md:rounded-3xl"
+    },
+    "dark_luxury": {
+      "usage": "Statistics section, Final CTA.",
+      "classes": "bg-gradient-to-b from-[#0A0F1C] to-[#040810] text-white border-t border-white/5"
+    }
+  },
+  "spacing_and_layout": {
+    "section_padding": "py-24 md:py-32 lg:py-40",
+    "container": "max-w-7xl mx-auto px-6 md:px-8",
+    "bento_grid": "grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8",
+    "bento_spans": {
+      "centerpiece": "col-span-1 md:col-span-8 row-span-2",
+      "satellite_square": "col-span-1 md:col-span-4 row-span-1",
+      "satellite_tall": "col-span-1 md:col-span-4 row-span-2"
+    }
+  },
+  "motion_and_animations": {
+    "library": "framer-motion",
+    "physics": {
+      "spring": { "stiffness": 100, "damping": 20, "mass": 1 },
+      "gentle": { "stiffness": 80, "damping": 15 }
+    },
+    "patterns": {
+      "hero_orbit": "Infinite slow rotation for surrounding platform cards (LinkedIn, Indeed). Constant floating Y-axis translation.",
+      "scroll_storytelling": "useScroll tied to section opacity, scale, and y-transform. As user scrolls, Acts 1 through 5 trigger sequential animations.",
+      "mouse_parallax": "useMotionValue mapped to mouse coordinates for hero 3D dashboard and Final CTA elements.",
+      "animated_counters": "framer-motion useSpring hooked into IntersectionObserver for the dark blue stats section.",
+      "magnetic_buttons": "On hover, CTA buttons slightly translate towards mouse cursor coordinates."
+    }
+  },
+  "narrative_and_sections": {
+    "hero": {
+      "layout": "Full screen (min-h-screen). Massive centered typography.",
+      "headline": "Your Job Search. On Autopilot.",
+      "subheadline": "Upload your resume once. We find relevant jobs, tailor your applications, and apply on your behalf while you focus on interviews.",
+      "primary_cta": "Start Applying Today",
+      "visual": "A 3D floating dashboard in center showing: Applications Submitted, Interviews, Responses. Around it, float cards (LinkedIn, Wellfound, Glassdoor, Workday). Use Lucide React or react-icons for these logos. Add an animated SVG paper airplane traveling between nodes."
+    },
+    "scroll_storytelling": {
+      "concept": "5 sequential acts using scroll progress. Visuals stay sticky while text changes.",
+      "acts": [
+        "1. Resume Upload: Card animates upward, glowing scanner effect.",
+        "2. AI Scanning: Skills extracted dynamically with typing effects.",
+        "3. Application Pipeline: Job cards flow into a funnel/workflow.",
+        "4. Interview Requests: Calendar invites pop in with spring physics.",
+        "5. Offer Received: Confetti or success glow animation."
+      ]
+    },
+    "features_bento": {
+      "layout": "Premium Bento Grid. NOT equal cards.",
+      "centerpiece": "Auto Apply Agent (interactive terminal/dashboard mock).",
+      "satellites": ["Resume Builder", "Resume Optimizer", "ATS Checker", "LinkedIn Optimizer", "Career Shield", "Application Tracker"]
+    },
+    "social_proof": {
+      "layout": "Live Activity Feed ticker or stack.",
+      "content": "Real-time feeling toasts: 'Rahul received an interview request', 'Sarah received an offer'. Use Framer Motion AnimatePresence for entering/exiting items."
+    },
+    "statistics": {
+      "layout": "Dark luxury section (Archetype 5 influence).",
+      "visuals": "Huge text counters (50K+, 8,500+, 2,400+, 1,200+). Deep blue gradients and subtle noise texture."
+    },
+    "pricing": {
+      "layout": "2-column grid. Clean, transparent tech patterns.",
+      "plans": [
+        { "name": "Starter", "price": "₹499/mo", "features": ["100 targeted applications"] },
+        { "name": "Pro", "price": "₹999/mo", "features": ["300 targeted applications", "Priority processing", "Career Shield"], "highlight": true }
+      ],
+      "emphasis": "Targeted matching, not spam."
+    },
+    "final_cta": {
+      "layout": "Massive premium section, dark blue gradient, beautiful ambient lighting bleed (tracing beam or blurred glowing orbs behind text).",
+      "headline": "Your Dream Job Is Closer Than You Think."
+    }
+  },
+  "app_functionality": {
+    "onboarding": "8-step Framer Motion wizard (Personal Info -> Resume Upload -> LinkedIn -> Target Roles -> Target Countries -> Salary -> Job Search Email -> Subscription).",
+    "dashboard": "User Dashboard. Free tier: shows AI resume update, 10 jobs/month, no auto-apply. Paid tier: Full auto-apply metrics.",
+    "admin": "Admin panel for user management, plan changes, manual job pushes, analytics. Strict grid hierarchy."
+  },
+  "media_and_images": {
+    "instructions": "Use lucide-react or react-icons for company logos (Linkedin, Glassdoor, etc) to maintain a crisp tech aesthetic. Use the provided Unsplash/Pexels images for avatars and premium textures.",
+    "avatars": [
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80"
+    ],
+    "textures": [
+      "https://images.unsplash.com/photo-1584384689201-e0bcbe2c7f1d?auto=format&fit=crop&q=80",
+      "https://images.pexels.com/photos/31103738/pexels-photo-31103738.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    ]
+  },
+  "testing_and_accessibility": {
+    "requirements": "All interactive elements (buttons, inputs, cards) MUST include a 'data-testid' attribute using kebab-case, role-based naming (e.g., 'data-testid=\"hero-cta-button\"'). Ensure high contrast ratios on dark sections."
+  }
+}
