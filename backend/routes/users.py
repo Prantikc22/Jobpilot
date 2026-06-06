@@ -42,6 +42,16 @@ async def _ensure_user(db, sb_user: dict) -> dict:
         if not doc.get("pricing_variant"):
             import secrets
             patch["pricing_variant"] = "A" if secrets.randbelow(2) == 0 else "B"
+        # Auto-downgrade to free if subscription has expired
+        if doc.get("plan") in ("starter", "pro") and doc.get("subscription_active_until"):
+            try:
+                from datetime import datetime as _dt
+                expiry = _dt.fromisoformat(doc["subscription_active_until"].replace("Z", "+00:00"))
+                if expiry < datetime.now(timezone.utc):
+                    patch["plan"] = "free"
+                    patch["downgraded_at"] = datetime.now(timezone.utc).isoformat()
+            except Exception:
+                pass
         if patch:
             await db.users.update_one({"supabase_user_id": uid}, {"$set": patch})
             doc.update(patch)

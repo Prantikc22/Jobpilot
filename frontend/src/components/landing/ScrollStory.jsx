@@ -177,24 +177,25 @@ function ResumeUploadVisual() {
 
 function AIScanVisual() {
   const skills = ["Python", "React", "AWS", "Kubernetes", "TypeScript", "GraphQL", "PostgreSQL", "ML Ops"];
+  const SIZE = 380; // container size
+  const RING_RADIUS = (SIZE - 96) / 2; // inset-12 = 48px on each side -> ring radius ≈ 142
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      <div className="relative w-[340px] h-[360px]">
+      <div className="relative" style={{ width: SIZE, height: SIZE }}>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0 rounded-full border-2 border-dashed border-zinc-200"
+          className="absolute inset-12 rounded-full border-2 border-dashed border-zinc-200"
         />
-        <div className="absolute inset-12 rounded-full jp-conic p-[1.5px]">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full jp-conic p-[1.5px]">
           <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-            <Sparkles className="w-10 h-10 text-zinc-900" />
+            <Sparkles className="w-8 h-8 text-zinc-900" />
           </div>
         </div>
         {skills.map((s, i) => {
-          const a = (i / skills.length) * Math.PI * 2;
-          const r = 170;
-          const x = Math.cos(a) * r;
-          const y = Math.sin(a) * r;
+          const a = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
+          const x = Math.cos(a) * RING_RADIUS;
+          const y = Math.sin(a) * RING_RADIUS;
           return (
             <motion.div
               key={s}
@@ -202,7 +203,7 @@ function AIScanVisual() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 * i, duration: 0.5 }}
               style={{ left: "50%", top: "50%", x, y }}
-              className="absolute -translate-x-1/2 -translate-y-1/2 jp-glass px-2.5 py-1 rounded-full text-xs font-medium text-zinc-700"
+              className="absolute -translate-x-1/2 -translate-y-1/2 jp-glass px-2.5 py-1 rounded-full text-xs font-medium text-zinc-700 whitespace-nowrap"
             >
               {s}
             </motion.div>

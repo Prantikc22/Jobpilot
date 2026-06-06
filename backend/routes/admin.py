@@ -89,3 +89,9 @@ async def list_orders(admin=Depends(get_current_admin), db=Depends(get_db), limi
 async def list_applications(admin=Depends(get_current_admin), db=Depends(get_db), limit: int = 200):
     apps = await db.applications.find({}, {"_id": 0}).sort("submitted_at", -1).to_list(limit)
     return {"applications": apps}
+
+
+@router.get("/webhook-events")
+async def list_webhook_events(admin=Depends(get_current_admin), db=Depends(get_db), limit: int = 100):
+    events = await db.webhook_events.find({}, {"_id": 0}).sort("received_at", -1).to_list(limit)
+    return {"events": events}

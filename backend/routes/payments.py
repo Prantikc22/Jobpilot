@@ -1,16 +1,22 @@
 """Razorpay payments routes."""
 import os
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+import hmac
+import hashlib
+import logging
+from datetime import datetime, timezone, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from pydantic import BaseModel
 
 from auth_deps import get_current_user
 from db import get_db
 from services.razorpay_service import create_order, verify_signature
 
+logger = logging.getLogger("payments")
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 PLAN_PRICES = {"starter": 49900, "pro": 99900}  # in paise
+PLAN_DAYS = 30
+RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "")
 
 
 class CreateOrder(BaseModel):
@@ -70,7 +76,109 @@ async def verify_route(body: Verify, user=Depends(get_current_user), db=Depends(
     )
     await db.users.update_one(
         {"supabase_user_id": user["id"]},
-        {"$set": {"plan": body.plan, "subscription_started_at": datetime.now(timezone.utc).isoformat()}},
+        {
+            "$set": {
+                "plan": body.plan,
+                "subscription_started_at": datetime.now(timezone.utc).isoformat(),
+                "subscription_active_until": (datetime.now(timezone.utc) + timedelta(days=PLAN_DAYS)).isoformat(),
+                "applications_count": 0,  # reset monthly quota
+            }
+        },
         upsert=True,
     )
     return {"ok": True, "plan": body.plan}
+
+
+@router.post("/webhook")
+async def webhook(request: Request, x_razorpay_signature: str = Header(None), db=Depends(get_db)):
+    """
+    Razorpay webhook handler for renewal events.
+
+    Configure in Razorpay dashboard: webhook URL = {host}/api/payments/webhook
+    Events: payment.captured, payment.failed, subscription.charged, subscription.cancelled
+    Set RAZORPAY_WEBHOOK_SECRET env var to enable signature verification.
+    """
+    raw_body = await request.body()
+
+    # Verify signature (only if webhook secret is configured)
+    if RAZORPAY_WEBHOOK_SECRET:
+        if not x_razorpay_signature:
+            raise HTTPException(status_code=400, detail="Missing webhook signature")
+        expected = hmac.new(
+            RAZORPAY_WEBHOOK_SECRET.encode("utf-8"),
+            raw_body,
+            hashlib.sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(expected, x_razorpay_signature):
+            raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
+    try:
+        import json
+        payload = json.loads(raw_body.decode("utf-8"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    event = payload.get("event", "")
+    entity = (payload.get("payload", {}).get("payment", {}) or {}).get("entity") or \
+             (payload.get("payload", {}).get("subscription", {}) or {}).get("entity") or {}
+
+    # Always log the webhook event for admin observability
+    await db.webhook_events.insert_one(
+        {
+            "event": event,
+            "raw_event_id": payload.get("id"),
+            "entity_id": entity.get("id"),
+            "received_at": datetime.now(timezone.utc).isoformat(),
+            "summary": {
+                "amount": entity.get("amount"),
+                "status": entity.get("status"),
+                "notes": entity.get("notes", {}),
+            },
+        }
+    )
+
+    if event == "payment.captured":
+        notes = entity.get("notes") or {}
+        supabase_user_id = notes.get("supabase_user_id")
+        plan = notes.get("plan")
+        if not supabase_user_id or plan not in PLAN_PRICES:
+            return {"ok": True, "ignored": True, "reason": "missing notes"}
+
+        # Determine new expiry: if current expiry in future, extend; else start fresh
+        user_doc = await db.users.find_one({"supabase_user_id": supabase_user_id})
+        now = datetime.now(timezone.utc)
+        current_expiry = None
+        if user_doc and user_doc.get("subscription_active_until"):
+            try:
+                current_expiry = datetime.fromisoformat(user_doc["subscription_active_until"].replace("Z", "+00:00"))
+            except Exception:
+                current_expiry = None
+        base = current_expiry if current_expiry and current_expiry > now else now
+        new_expiry = base + timedelta(days=PLAN_DAYS)
+
+        await db.users.update_one(
+            {"supabase_user_id": supabase_user_id},
+            {
+                "$set": {
+                    "plan": plan,
+                    "subscription_active_until": new_expiry.isoformat(),
+                    "last_renewal_at": now.isoformat(),
+                    "applications_count": 0,  # reset monthly quota on renewal
+                }
+            },
+            upsert=False,
+        )
+        logger.info(f"[webhook] renewed plan={plan} user={supabase_user_id} until={new_expiry.isoformat()}")
+        return {"ok": True, "renewed": True, "until": new_expiry.isoformat()}
+
+    if event in ("payment.failed", "subscription.cancelled"):
+        notes = entity.get("notes") or {}
+        supabase_user_id = notes.get("supabase_user_id")
+        if supabase_user_id:
+            await db.users.update_one(
+                {"supabase_user_id": supabase_user_id},
+                {"$set": {"last_payment_failed_at": datetime.now(timezone.utc).isoformat()}},
+            )
+        return {"ok": True, "noted": True}
+
+    return {"ok": True, "ignored": True, "event": event}

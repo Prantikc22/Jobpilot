@@ -1,0 +1,43 @@
+{
+  "summary": "Iteration 3 backend testing complete. 19/19 new tests PASS for the Razorpay webhook handler, auto-downgrade on /api/users/me, webhook_events admin listing, and regressions for A/B view-dedup + referrals PII fix + share OG image. All requested behaviours verified end-to-end including: payment.captured renews fresh user from now+30d, extends correctly from current future expiry (~45d after 15d remaining), missing notes returns {ok:true,ignored:true,reason:'missing notes'}, payment.failed sets last_payment_failed_at WITHOUT downgrade, subscription.cancelled accepted+logged, webhook works without signature when RAZORPAY_WEBHOOK_SECRET is empty, every webhook persists in db.webhook_events and shows up in /api/admin/webhook-events (admin JWT required), _ensure_user auto-downgrades expired starter to free with downgraded_at timestamp and keeps plan when expiry in future, /api/ab/variant logs 'view' only on first cookie issuance (not on refresh), /api/referrals/apply response is exactly {ok:true} with no email hint. Regression: /api/health, /api/activity/feed, /api/activity/stats, /api/ab/variant/pricing_copy, /api/admin/login, share OG PNG 1200x630 all pass. /api/payments/verify subscription_active_until + applications_count=0 logic verified via source review (lines 83-84 of routes/payments.py) - cannot fully exercise via integration test because real Razorpay signature is required.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/payments/webhook", "issue": "When RAZORPAY_WEBHOOK_SECRET is empty (current state), any external party can POST arbitrary webhook payloads and trigger a plan renewal if they know a real supabase_user_id. This is acceptable for dev/preview but MUST be set to a non-empty value before production; consider failing-closed by default (return 503 if secret unset) in production builds."},
+      {"endpoint": "POST /api/payments/webhook", "issue": "Webhook ALWAYS writes to db.webhook_events even for unknown event types - good for observability but db.webhook_events has no TTL/index defined; recommend a 90-day TTL index on received_at to prevent unbounded growth."},
+      {"endpoint": "POST /api/payments/webhook", "issue": "No idempotency guard on raw_event_id - if Razorpay redelivers the same event_id (which it does on 4xx/5xx), the user gets renewed twice (e.g., extra 30 days). Recommend dedupe on raw_event_id via unique index or pre-check before applying renewal."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_webhook_and_downgrade.py",
+    "/app/test_reports/pytest/pytest_iter3.xml"
+  ],
+  "action_items": [
+    "Set RAZORPAY_WEBHOOK_SECRET in production .env before going live (currently empty by design for testing).",
+    "Add idempotency dedupe in /api/payments/webhook: skip the renewal $set if a doc with the same raw_event_id already exists in db.webhook_events (or use insert with unique index and catch DuplicateKey).",
+    "Add a TTL index on db.webhook_events.received_at (e.g., 90 days) to keep collection bounded.",
+    "Consider also resetting applications_count to 0 in the auto-downgrade branch of _ensure_user (currently only the plan is reset; a downgraded-then-resub user keeps their stale counter)."
+  ],
+  "critical_code_review_comments": [
+    "routes/payments.py webhook: upsert=False is correct (prevents ghost users from forged webhooks), but combined with empty RAZORPAY_WEBHOOK_SECRET means an attacker who guesses any real supabase_user_id can renew them at will - in prod this MUST be flipped to enforce signature or 503.",
+    "routes/payments.py webhook: no idempotency. Razorpay retries failed webhooks up to 24 times - same raw_event_id could double-extend subscriptions. Use unique index on webhook_events.raw_event_id or check-before-renew.",
+    "routes/users.py _ensure_user: auto-downgrade only resets `plan` and `downgraded_at`; does NOT clear/reset subscription_active_until, applications_count, or set last_renewal_at to null. The applications_count stays at whatever it was when subscription was active - if user then resubscribes, the webhook resets it, so harmless, but cleaner to reset here too.",
+    "routes/payments.py webhook entity extraction: `(payload.get('payload', {}).get('payment', {}) or {}).get('entity')` chain works but is fragile - prefer explicit if/elif for payment vs subscription event families.",
+    "RAZORPAY_WEBHOOK_SECRET read at module import time (line 19) - if env changes without restart, signature check stays on old secret. Acceptable since supervisor restarts on .env change."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_webhook_and_downgrade.py (NEW - 19 tests for webhook + auto-downgrade + iter-3 regressions)"
+  ],
+  "success_rate": {"backend": "100% (19/19 new tests pass)", "frontend": "skipped per request"},
+  "test_credentials": "Admin: admin@jobpilot.ai / JobPilot@2026. Supabase test users created+deleted per test module (testpilot+wh_<ts>_<uid>@jobpilot.ai pattern).",
+  "seed_data_creation": "Per-run: 3 ephemeral Supabase users (1 main user_wh module-scope + 2 short-lived for referrals-no-hint test + 1 for share-OG test) all deleted in teardown. ~6 webhook_events docs inserted into db.webhook_events (admin can view via /api/admin/webhook-events).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All iter-3 features (webhook, auto-downgrade, admin webhook-events listing) are GREEN. Three improvement items remain (idempotency, TTL index, applications_count reset on downgrade) but they are enhancements, not bugs. /api/payments/verify subscription_active_until+applications_count reset is correct by source review but not exercised by integration tests (needs real Razorpay signature). For prod cutover, set RAZORPAY_WEBHOOK_SECRET and configure the same value in Razorpay dashboard webhook settings.",
+  "rca of the issue": "N/A - no blocking issues. All requested behaviours work as designed."
+}

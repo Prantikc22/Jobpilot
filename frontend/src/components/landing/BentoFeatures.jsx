@@ -100,33 +100,36 @@ function CenterpieceAuto() {
       <div className="absolute -top-32 -right-20 w-[500px] h-[500px] rounded-full bg-blue-500/20 blur-[100px]" />
       <div className="absolute -bottom-40 -left-20 w-[400px] h-[400px] rounded-full bg-violet-500/20 blur-[100px]" />
 
-      <div className="relative">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/50 font-semibold">
-          <Bot className="w-4 h-4" />
-          The Centerpiece
-        </div>
-        <h3 className="font-display mt-5 text-4xl md:text-5xl lg:text-[3.4rem] leading-[1.02] tracking-[-0.03em] font-medium">
-          Auto Apply Agent
-        </h3>
-        <p className="mt-4 text-white/60 max-w-lg text-lg">
-          A 24/7 agent that hunts, tailors and submits applications across LinkedIn, Indeed, Wellfound, Glassdoor and Workday — matched to your skills, location, salary and work authorization.
-        </p>
+      <div className="relative grid md:grid-cols-[1.2fr_1fr] gap-6 md:gap-8 items-end h-full">
+        {/* Left column: copy + stats */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/50 font-semibold">
+            <Bot className="w-4 h-4" />
+            The Centerpiece
+          </div>
+          <h3 className="font-display mt-5 text-3xl md:text-4xl lg:text-[3rem] leading-[1.02] tracking-[-0.03em] font-medium">
+            Auto Apply Agent
+          </h3>
+          <p className="mt-4 text-white/60 text-base md:text-lg max-w-md">
+            A 24/7 agent that hunts, tailors and submits applications across LinkedIn, Indeed, Wellfound, Glassdoor and Workday — matched to your skills, location, salary and work authorization.
+          </p>
 
-        <div className="mt-7 grid grid-cols-3 gap-3 max-w-md">
-          {[
-            { l: "Tailored", v: "100%" },
-            { l: "Concurrent", v: "5+" },
-            { l: "Avg. apply", v: "37s" },
-          ].map((s) => (
-            <div key={s.l} className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 backdrop-blur">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-white/40 font-semibold">{s.l}</div>
-              <div className="font-display text-xl mt-0.5">{s.v}</div>
-            </div>
-          ))}
+          <div className="mt-7 grid grid-cols-3 gap-3 max-w-md">
+            {[
+              { l: "Tailored", v: "100%" },
+              { l: "Concurrent", v: "5+" },
+              { l: "Avg. apply", v: "37s" },
+            ].map((s) => (
+              <div key={s.l} className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 backdrop-blur">
+                <div className="text-[10px] uppercase tracking-[0.16em] text-white/40 font-semibold">{s.l}</div>
+                <div className="font-display text-xl mt-0.5">{s.v}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Terminal */}
-        <div className="absolute right-6 md:right-10 bottom-6 md:bottom-10 w-[280px] md:w-[340px] rounded-2xl bg-black/40 border border-white/10 p-3 backdrop-blur-md font-mono text-[11px] text-emerald-300 shadow-2xl">
+        {/* Right column: Terminal */}
+        <div className="rounded-2xl bg-black/40 border border-white/10 p-3 backdrop-blur-md font-mono text-[11px] text-emerald-300 shadow-2xl w-full">
           <div className="flex items-center gap-1.5 mb-2">
             <div className="w-2 h-2 rounded-full bg-rose-400/80" />
             <div className="w-2 h-2 rounded-full bg-amber-400/80" />

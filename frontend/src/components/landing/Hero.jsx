@@ -1,22 +1,69 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Plane, Briefcase, Linkedin, Building2, Globe, Sparkles, ArrowUpRight, PlayCircle } from "lucide-react";
+import { Plane, ArrowUpRight, PlayCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const PLATFORMS = [
-  { name: "LinkedIn", icon: Linkedin, color: "#0A66C2", angle: 0 },
-  { name: "Indeed", icon: Briefcase, color: "#2557A7", angle: 72 },
-  { name: "Wellfound", icon: Sparkles, color: "#000000", angle: 144 },
-  { name: "Glassdoor", icon: Building2, color: "#0CAA41", angle: 216 },
-  { name: "Workday", icon: Globe, color: "#F38B00", angle: 288 },
+// SVG brand marks (compact, monochrome-styled for trust strip)
+const BRAND_MARKS = {
+  Google: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.07H2.18A10.97 10.97 0 0 0 1 12c0 1.78.43 3.45 1.18 4.93l3.66-2.83z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.65l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+  ),
+  Meta: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5"><path fill="#0866FF" d="M12 1.5a10.5 10.5 0 1 0 0 21 10.5 10.5 0 0 0 0-21Zm5.6 11.4c-.36 1.36-1.4 2.55-2.42 2.55-.79 0-1.4-.55-2.16-2.06l-.97-1.9-1.06 2.04c-.78 1.47-1.36 1.92-2.15 1.92-1.25 0-2.16-1.34-2.41-3.1-.13-.92-.04-1.93.27-2.93.4-1.28 1.18-2.05 2.13-2.05.99 0 1.7.71 2.91 3.13l.61 1.22 1.16-2.23c.99-1.4 1.66-2.12 2.66-2.12.93 0 1.6.74 1.83 1.88.21 1.04.16 2.31-.4 3.65Z"/></svg>
+  ),
+  Stripe: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5"><path fill="#635BFF" d="M13.48 10.18c0-.7.58-.98 1.54-.98 1.4 0 3.16.43 4.55 1.17V6.27a12.1 12.1 0 0 0-4.55-.84c-3.72 0-6.2 1.95-6.2 5.2 0 5.07 6.97 4.27 6.97 6.45 0 .83-.72 1.1-1.74 1.1-1.52 0-3.47-.62-5-1.46v4.16c1.7.73 3.43 1.05 5 1.05 3.81 0 6.43-1.88 6.43-5.17 0-5.47-7-4.52-7-6.58Z"/></svg>
+  ),
+  Razorpay: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5"><path fill="#0C2451" d="m6.2 16.93 1.18-4.4-3.42 9.97h3.96l3.95-11.66-5.67 6.09Zm14.84-12.93H14.7L9.65 18.46l1.42-5.29 2.43-7.06h-.01l.03-.11h3.84l-2.04 6 .01.01-2.05 6.16h3.96L21.04 4Z"/></svg>
+  ),
+  Atlassian: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5"><defs><linearGradient id="atl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#0052CC"/><stop offset="1" stopColor="#2684FF"/></linearGradient></defs><path fill="url(#atl)" d="M7.12 11.66a.6.6 0 0 0-1.02.1L1.2 21.62a.62.62 0 0 0 .56.89h6.85a.6.6 0 0 0 .54-.34c1.47-3.02.59-7.63-2.03-10.51Z"/><path fill="#2684FF" d="M11.5 1.74a13.6 13.6 0 0 0-.78 13.45l3.27 6.55a.62.62 0 0 0 .56.34h6.85a.62.62 0 0 0 .55-.9S12.7 2.43 12.46 1.94a.55.55 0 0 0-.96-.2Z"/></svg>
+  ),
+};
+
+const ORBIT_PLATFORMS = [
+  { name: "LinkedIn", color: "#0A66C2", angle: 0,   x:  220, y:  -20 },
+  { name: "Indeed",   color: "#2557A7", angle: 72,  x:  140, y: -180 },
+  { name: "Wellfound",color: "#000000", angle: 144, x: -150, y: -150 },
+  { name: "Glassdoor",color: "#0CAA41", angle: 216, x: -210, y:   80 },
+  { name: "Workday",  color: "#F38B00", angle: 288, x:   30, y:  210 },
 ];
 
-function useCounter(target, duration = 1800) {
+function PlatformBubble({ platform, index, mx, my }) {
+  const sign = index % 2 === 0 ? 1 : -1;
+  const px = useTransform(mx, (v) => platform.x + v * 0.04 * sign);
+  const py = useTransform(my, (v) => platform.y - v * 0.04 * sign);
+  return (
+    <motion.div
+      style={{ left: "50%", top: "50%", x: px, y: py }}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.6 + index * 0.1, duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
+      className="absolute -translate-x-1/2 -translate-y-1/2"
+    >
+      <motion.div
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 4 + index * 0.3, repeat: Infinity, ease: "easeInOut", delay: index * 0.25 }}
+        className="jp-glass rounded-2xl px-3 py-2 flex items-center gap-2 min-w-[148px]"
+      >
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${platform.color}14` }}>
+          <span className="w-2 h-2 rounded-full" style={{ background: platform.color }} />
+        </div>
+        <div className="flex flex-col leading-tight">
+          <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-400 font-semibold">{platform.name}</span>
+          <span className="text-[12px] text-zinc-700 font-medium">3 new matches</span>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function useEasedCounter(target, duration = 1800) {
   const [v, setV] = useState(0);
   useEffect(() => {
-    let start;
-    let raf;
+    let raf, start;
     const step = (t) => {
       if (!start) start = t;
       const p = Math.min((t - start) / duration, 1);
@@ -30,40 +77,6 @@ function useCounter(target, duration = 1800) {
   return v;
 }
 
-function FloatingPlatformCard({ platform, index, radius, mx, my }) {
-  const Icon = platform.icon;
-  const angleRad = (platform.angle * Math.PI) / 180;
-  const x = Math.cos(angleRad) * radius;
-  const y = Math.sin(angleRad) * radius * 0.55;
-
-  const px = useTransform(mx, (v) => x + v * (index % 2 === 0 ? 0.04 : -0.04));
-  const py = useTransform(my, (v) => y + v * (index % 2 === 0 ? -0.04 : 0.04));
-
-  return (
-    <motion.div
-      style={{ left: "50%", top: "50%", x: px, y: py }}
-      initial={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.6 + index * 0.12, duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
-      className="absolute -translate-x-1/2 -translate-y-1/2"
-    >
-      <motion.div
-        animate={{ y: [0, -12, 0] }}
-        transition={{ duration: 4 + index * 0.4, repeat: Infinity, ease: "easeInOut", delay: index * 0.3 }}
-        className="jp-glass rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5 min-w-[160px]"
-      >
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${platform.color}14` }}>
-          <Icon className="w-4 h-4" style={{ color: platform.color }} />
-        </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-400 font-semibold">{platform.name}</span>
-          <span className="text-[13px] text-zinc-700 font-medium">3 new matches</span>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 export default function Hero() {
   const { t } = useTranslation();
   const containerRef = useRef(null);
@@ -72,18 +85,16 @@ export default function Hero() {
   const smoothX = useSpring(mouseX, { stiffness: 60, damping: 18 });
   const smoothY = useSpring(mouseY, { stiffness: 60, damping: 18 });
 
-  const apps = useCounter(1247);
-  const interviews = useCounter(38);
-  const responseRate = useCounter(34);
-  const offers = useCounter(7);
+  const apps = useEasedCounter(1247);
+  const interviews = useEasedCounter(38);
+  const responseRate = useEasedCounter(34);
+  const offers = useEasedCounter(7);
 
   const onMove = (e) => {
     const r = containerRef.current?.getBoundingClientRect();
     if (!r) return;
-    const cx = r.left + r.width / 2;
-    const cy = r.top + r.height / 2;
-    mouseX.set(e.clientX - cx);
-    mouseY.set(e.clientY - cy);
+    mouseX.set(e.clientX - r.left - r.width / 2);
+    mouseY.set(e.clientY - r.top - r.height / 2);
   };
 
   const dashTilt = useTransform(smoothX, [-400, 400], [4, -4]);
@@ -93,13 +104,13 @@ export default function Hero() {
     <section
       ref={containerRef}
       onMouseMove={onMove}
-      className="relative pt-40 pb-24 md:pt-48 md:pb-32 overflow-hidden"
+      className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden"
       data-testid="hero-section"
     >
       <div className="jp-mesh" aria-hidden />
       <div className="absolute inset-0 jp-dot-grid opacity-30 pointer-events-none" aria-hidden />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8 grid lg:grid-cols-[1.05fr_1fr] gap-16 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
         {/* Left: Copy */}
         <div className="relative">
           <motion.div
@@ -112,21 +123,11 @@ export default function Hero() {
             {t("hero.badge")}
           </motion.div>
 
-          <h1 className="font-display mt-6 text-[2.75rem] sm:text-6xl lg:text-[5.2rem] leading-[0.98] tracking-[-0.035em] font-medium text-zinc-900">
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.05 }}
-              className="block"
-            >
+          <h1 className="font-display mt-6 text-[2.5rem] sm:text-5xl lg:text-[4.4rem] xl:text-[5rem] leading-[0.98] tracking-[-0.035em] font-medium text-zinc-900">
+            <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.05 }} className="block">
               {t("hero.title1")}
             </motion.span>
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.18 }}
-              className="block"
-            >
+            <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.18 }} className="block">
               <span className="jp-gradient-text">{t("hero.title2")}</span>
             </motion.span>
           </h1>
@@ -135,7 +136,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.32 }}
-            className="mt-7 text-lg md:text-xl text-zinc-500 max-w-xl leading-relaxed"
+            className="mt-6 text-base md:text-lg lg:text-xl text-zinc-500 max-w-xl leading-relaxed"
           >
             {t("hero.sub")}
           </motion.p>
@@ -144,110 +145,119 @@ export default function Hero() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-9 flex flex-wrap items-center gap-3"
+            className="mt-8 flex flex-wrap items-center gap-3"
           >
-            <Link
-              to="/signup"
-              className="jp-btn-primary inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium"
-              data-testid="hero-cta-primary"
-            >
+            <Link to="/signup" className="jp-btn-primary inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium" data-testid="hero-cta-primary">
               {t("hero.primary")}
               <ArrowUpRight className="w-4 h-4" />
             </Link>
-            <a
-              href="#story"
-              className="jp-btn-secondary inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium"
-              data-testid="hero-cta-secondary"
-            >
+            <a href="#story" className="jp-btn-secondary inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium" data-testid="hero-cta-secondary">
               <PlayCircle className="w-4 h-4" />
               {t("hero.secondary")}
             </a>
           </motion.div>
 
+          {/* Trusted by — logos */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="mt-10 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold"
+            className="mt-10"
+            data-testid="trusted-by"
           >
-            <span>{t("hero.trustline")}</span>
-            <span className="text-zinc-700">Google · Meta · Stripe · Razorpay · Atlassian</span>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-zinc-400 font-semibold mb-3">
+              {t("hero.trustline")}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              {Object.entries(BRAND_MARKS).map(([name, mark]) => (
+                <div
+                  key={name}
+                  className="flex items-center gap-2 text-zinc-700 hover:text-zinc-900 transition-colors"
+                  title={name}
+                >
+                  {mark}
+                  <span className="text-sm font-semibold tracking-tight">{name}</span>
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
 
-        {/* Right: Living dashboard */}
-        <div className="relative h-[520px] lg:h-[600px]">
-          {/* Orbit ring */}
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-8 rounded-full border border-dashed border-zinc-200/80"
-          />
-          <motion.div
-            animate={{ rotate: -360 }}
-            transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-16 rounded-full border border-dashed border-zinc-200/60"
-          />
-
-          {/* Floating platform cards */}
-          {PLATFORMS.map((p, i) => (
-            <FloatingPlatformCard key={p.name} platform={p} index={i} radius={230} mx={smoothX} my={smoothY} />
-          ))}
-
-          {/* Animated paper airplane */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.6, duration: 0.4 }}
-            className="absolute inset-0 pointer-events-none"
-          >
+        {/* Right: Living dashboard — fully contained */}
+        <div className="relative w-full mx-auto" style={{ maxWidth: 560 }}>
+          <div className="relative aspect-square">
+            {/* Orbit rings */}
             <motion.div
-              animate={{
-                x: [0, 180, 60, -160, -40, 0],
-                y: [0, -140, -200, -110, 60, 0],
-                rotate: [0, 35, 70, 140, 200, 360],
-              }}
-              transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-              style={{ left: "50%", top: "50%" }}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-4 rounded-full border border-dashed border-zinc-200/80"
+            />
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-14 rounded-full border border-dashed border-zinc-200/60"
+            />
+
+            {/* Floating platform cards */}
+            {ORBIT_PLATFORMS.map((p, i) => (
+              <PlatformBubble key={p.name} platform={p} index={i} mx={smoothX} my={smoothY} />
+            ))}
+
+            {/* Animated paper airplane */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.4, duration: 0.4 }}
+              className="absolute inset-0 pointer-events-none"
             >
-              <div className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center border border-zinc-200">
-                <Plane className="w-4 h-4 text-zinc-900 -rotate-45" />
+              <motion.div
+                animate={{
+                  x: [0, 140, 60, -130, -30, 0],
+                  y: [0, -110, -160, -90, 50, 0],
+                  rotate: [0, 35, 70, 140, 200, 360],
+                }}
+                transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+                style={{ left: "50%", top: "50%" }}
+                className="absolute -translate-x-1/2 -translate-y-1/2"
+              >
+                <div className="w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center border border-zinc-200">
+                  <Plane className="w-3.5 h-3.5 text-zinc-900 -rotate-45" />
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Central dashboard */}
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.9, delay: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
+              style={{ rotateY: dashTilt, rotateX: dashTiltY, transformStyle: "preserve-3d", transformPerspective: 1200 }}
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[340px] jp-glass rounded-3xl p-5 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.25)]"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-rose-400" />
+                  <div className="w-2 h-2 rounded-full bg-amber-400" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                </div>
+                <span className="font-mono text-[10px] text-zinc-400">jobpilot.ai</span>
+              </div>
+              <div className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">This Month</div>
+              <div className="grid grid-cols-2 gap-3">
+                <Stat label="Applications" value={apps.toLocaleString()} accent="from-blue-500 to-indigo-500" />
+                <Stat label="Interviews" value={interviews} accent="from-violet-500 to-fuchsia-500" />
+                <Stat label="Response Rate" value={`${responseRate}%`} accent="from-emerald-500 to-teal-500" />
+                <Stat label="Offers" value={offers} accent="from-amber-500 to-orange-500" />
+              </div>
+              <div className="mt-4 pt-4 border-t border-zinc-200/60 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs text-zinc-500">Pilot active · auto-applying</span>
+                </div>
+                <span className="font-mono text-[11px] text-zinc-600">14:32</span>
               </div>
             </motion.div>
-          </motion.div>
-
-          {/* Central dashboard */}
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.9, delay: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
-            style={{ rotateY: dashTilt, rotateX: dashTiltY, transformStyle: "preserve-3d", transformPerspective: 1200 }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[330px] sm:w-[380px] jp-glass rounded-3xl p-5 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.25)]"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-rose-400" />
-                <div className="w-2 h-2 rounded-full bg-amber-400" />
-                <div className="w-2 h-2 rounded-full bg-emerald-400" />
-              </div>
-              <span className="font-mono text-[10px] text-zinc-400">jobpilot.ai</span>
-            </div>
-            <div className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">This Month</div>
-            <div className="grid grid-cols-2 gap-3">
-              <Stat label="Applications" value={apps.toLocaleString()} accent="from-blue-500 to-indigo-500" />
-              <Stat label="Interviews" value={interviews} accent="from-violet-500 to-fuchsia-500" />
-              <Stat label="Response Rate" value={`${responseRate}%`} accent="from-emerald-500 to-teal-500" />
-              <Stat label="Offers" value={offers} accent="from-amber-500 to-orange-500" />
-            </div>
-            <div className="mt-4 pt-4 border-t border-zinc-200/60 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs text-zinc-500">Pilot active · auto-applying</span>
-              </div>
-              <span className="font-mono text-[11px] text-zinc-600">14:32</span>
-            </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

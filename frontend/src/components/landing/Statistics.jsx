@@ -6,13 +6,16 @@ import axios from "axios";
 function AnimatedNumber({ to }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-15%" });
-  const [v, setV] = useState(0);
+  // Initialize with the target so static value is shown immediately if animation never fires
+  const [v, setV] = useState(to);
   useEffect(() => {
     if (!inView) return;
+    setV(0);
     const controls = animate(0, to, {
       duration: 2.2,
       ease: [0.2, 0.7, 0.2, 1],
       onUpdate: (val) => setV(Math.floor(val)),
+      onComplete: () => setV(to),
     });
     return () => controls.stop();
   }, [inView, to]);
