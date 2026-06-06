@@ -119,16 +119,24 @@ async def webhook(request: Request, x_razorpay_signature: str = Header(None), db
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     event = payload.get("event", "")
+    raw_event_id = payload.get("id")
     entity = (payload.get("payload", {}).get("payment", {}) or {}).get("entity") or \
              (payload.get("payload", {}).get("subscription", {}) or {}).get("entity") or {}
+
+    # Idempotency: Razorpay can redeliver the same webhook up to 24 times. Skip if we've already processed.
+    if raw_event_id:
+        existing = await db.webhook_events.find_one({"raw_event_id": raw_event_id, "processed": True})
+        if existing:
+            return {"ok": True, "duplicate": True, "raw_event_id": raw_event_id}
 
     # Always log the webhook event for admin observability
     await db.webhook_events.insert_one(
         {
             "event": event,
-            "raw_event_id": payload.get("id"),
+            "raw_event_id": raw_event_id,
             "entity_id": entity.get("id"),
             "received_at": datetime.now(timezone.utc).isoformat(),
+            "processed": False,
             "summary": {
                 "amount": entity.get("amount"),
                 "status": entity.get("status"),
@@ -169,6 +177,8 @@ async def webhook(request: Request, x_razorpay_signature: str = Header(None), db
             upsert=False,
         )
         logger.info(f"[webhook] renewed plan={plan} user={supabase_user_id} until={new_expiry.isoformat()}")
+        if raw_event_id:
+            await db.webhook_events.update_one({"raw_event_id": raw_event_id}, {"$set": {"processed": True}})
         return {"ok": True, "renewed": True, "until": new_expiry.isoformat()}
 
     if event in ("payment.failed", "subscription.cancelled"):
