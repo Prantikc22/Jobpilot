@@ -1,0 +1,50 @@
+{
+  "summary": "First-run end-to-end test of JobPilot. Backend: 38/38 pytest tests pass across public endpoints (health, activity), admin auth + RBAC, plan-aware jobs, payments order-creation/verify, resume upload validation, and authenticated user CRUD via a real Supabase-signed JWT. Frontend: landing page, admin login + dashboard with 4 tabs, dashboard auth-gating all verified. Signup UI fires the Supabase request but ends on /signin (Supabase project appears to require email confirmation, so no session is returned client-side and SignUp.jsx falls back without surfacing the explicit 'confirm your email' message).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/admin/users/{id}/plan", "issue": "Always returns 200 even when supabase_user_id does not exist (no docs matched). Consider 404 when matched_count=0 for clearer admin UX."},
+      {"endpoint": "POST /api/jobs/tailor-letter & /api/ai/*", "issue": "Not executed end-to-end (OpenRouter free model is flaky per agent-to-agent note); auth gating verified, AI happy-path not exercised."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "SignUp.jsx", "issue": "After supabase.auth.signUp returns no session (because the Supabase project requires email confirmation), the user is silently sent to /signin instead of seeing a 'Check your email to confirm' message. From the user POV the signup appears to fail (console 400 surfaces).", "selector": "[data-testid=\"signup-submit\"]", "priority": "HIGH"}
+    ],
+    "integration_issues": [
+      {"flow": "Signup → Onboarding", "issue": "Redirect to /onboarding requires an active session; if Supabase requires email confirm, no session is created. Either (a) toggle 'Confirm email' off in Supabase project, or (b) show explicit 'Verify your email' screen and exchange the link for a session before /onboarding.", "affected_selectors": ["[data-testid=\"signup-submit\"]"]}
+    ],
+    "design_issues": [
+      {"screen": "Landing hero", "issues": ["Hero copy in the live build reads 'Your dream job is closer than you think' as the FINAL CTA section AND the hero (replaced from 'Your Job Search. On Autopilot.'). Earlier screenshot still shows the 'On Autopilot' hero — looks like there are two competing hero variants depending on viewport/scroll. Confirm which is intended."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_api.py",
+    "/app/backend/tests/test_authenticated.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/pytest_authenticated.xml"
+  ],
+  "action_items": [
+    "Fix SignUp.jsx UX when Supabase returns no session (email confirmation required) — show a clear 'Check your inbox' screen instead of redirecting to /signin.",
+    "Verify Supabase project's 'Confirm email' setting matches the intended onboarding flow (the original problem statement implies signup → /onboarding directly, so email confirmation should be OFF on the Supabase Auth dashboard, OR the SignUp.jsx must show a verify-email screen).",
+    "Optionally return 404 from PUT /api/admin/users/{id}/plan when no user matched."
+  ],
+  "critical_code_review_comments": [
+    "auth_deps.py reads ADMIN_EMAIL/PASSWORD at module import time — fine for prod but tests need .env loaded before import. Currently OK because backend already has these set.",
+    "PUT /api/admin/users/{id}/plan does not check update_one().matched_count → silent no-op. Suggest raising 404.",
+    "/api/users/me PUT accepts job_search_email_password directly — value is stored verbatim (no encryption-at-rest despite the comment). Consider encrypting or removing the claim in the doc comment.",
+    "/api/jobs/recommendations uses random.random() for match_score per request — recommendations re-shuffle each call, no determinism per user. Acceptable for demo but worth noting.",
+    "/api/payments/verify upserts user plan but does NOT enforce that the supabase_user_id matches order.supabase_user_id; a malicious authenticated user could provide a valid order_id/payment_id/signature triple from another user's order and upgrade themselves. Recommend asserting `order.supabase_user_id == user['id']` before activating the plan."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_api.py (NEW)",
+    "/app/backend/tests/test_authenticated.py (NEW)"
+  ],
+  "success_rate": {"backend": "100% (38/38 pytest)", "frontend": "85% (landing OK, admin OK, dashboard auth-gating OK, signup UX bug)"},
+  "test_credentials": "Admin: admin@jobpilot.ai / JobPilot@2026. Supabase test users provisioned by tests via admin API are auto-deleted in teardown. One residual test user remained visible in admin dashboard during testing.",
+  "seed_data_creation": "Backend tests provision a Supabase user per module run with email testpilot+<ts>_<uuid>@jobpilot.ai (auto-deleted in teardown). Order docs are created in Mongo by /api/payments/create-order during testing — admin dashboard now shows 2 'created' orders (₹999 Pro and ₹499 Starter) and 1 free user.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend is solid — all auth, admin, payments, jobs, resume validation, and user CRUD pass. Primary outstanding work is the frontend signup→onboarding flow which currently dead-ends at /signin if Supabase requires email confirmation. Re-test after main agent either disables email confirm in Supabase or adds an explicit verify-email screen. Avoid running test_authenticated.py more than a few times in quick succession — Supabase free tier rate-limits admin user creation.",
+  "rca of the issue": "Frontend signup posts to Supabase /auth/v1/signup. When the Supabase project has email confirmation enabled, the response is HTTP 200 with confirmation_sent_at and NO session. supabase.auth.signUp() in the browser surfaces this as data.session == null. SignUp.jsx does not check this and the AuthContext sees no session, so the post-signup navigation lands on /signin (because /onboarding is a protected route). The console 400 observed in the test was from a parallel Supabase user-conflict / rate-limit response after many test signups in the same minute — not the primary failure path, but confirms the rate-limit caveat."
+}
