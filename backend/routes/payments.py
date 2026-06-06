@@ -52,11 +52,18 @@ async def create_order_route(body: CreateOrder, user=Depends(get_current_user), 
 
 @router.post("/verify")
 async def verify_route(body: Verify, user=Depends(get_current_user), db=Depends(get_db)):
+    if body.plan not in PLAN_PRICES:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    order = await db.orders.find_one({"razorpay_order_id": body.razorpay_order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.get("supabase_user_id") != user["id"]:
+        raise HTTPException(status_code=403, detail="Order does not belong to this user")
+    if order.get("plan") != body.plan:
+        raise HTTPException(status_code=400, detail="Plan mismatch with order")
     ok = verify_signature(body.razorpay_order_id, body.razorpay_payment_id, body.razorpay_signature)
     if not ok:
         raise HTTPException(status_code=400, detail="Invalid signature")
-    if body.plan not in PLAN_PRICES:
-        raise HTTPException(status_code=400, detail="Invalid plan")
     await db.orders.update_one(
         {"razorpay_order_id": body.razorpay_order_id},
         {"$set": {"status": "paid", "razorpay_payment_id": body.razorpay_payment_id, "paid_at": datetime.now(timezone.utc).isoformat()}},

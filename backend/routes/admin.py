@@ -70,10 +70,12 @@ async def list_users(admin=Depends(get_current_admin), db=Depends(get_db), limit
 async def change_plan(supabase_user_id: str, body: PlanChange, admin=Depends(get_current_admin), db=Depends(get_db)):
     if body.plan not in ["free", "starter", "pro"]:
         raise HTTPException(status_code=400, detail="Invalid plan")
-    await db.users.update_one(
+    result = await db.users.update_one(
         {"supabase_user_id": supabase_user_id},
         {"$set": {"plan": body.plan, "updated_at": datetime.now(timezone.utc).isoformat()}},
     )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
     return {"ok": True}
 
 
