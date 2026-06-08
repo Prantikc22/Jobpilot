@@ -192,7 +192,7 @@ export default function Hero() {
             <span className="font-medium">{t("hero.badge")}</span>
           </motion.div>
 
-          <h1 className="font-display mt-5 sm:mt-6 text-[2.1rem] sm:text-[2.6rem] lg:text-[3.4rem] xl:text-[3.85rem] leading-[1.04] sm:leading-[1.02] tracking-[-0.035em] font-medium text-zinc-900">
+          <h1 className="font-display mt-5 sm:mt-6 text-[2.4rem] sm:text-5xl lg:text-[3.8rem] xl:text-[4.4rem] leading-[1.02] sm:leading-[0.98] tracking-[-0.035em] font-medium text-zinc-900">
             <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.05 }} className="block">
               {t("hero.title1")}
             </motion.span>

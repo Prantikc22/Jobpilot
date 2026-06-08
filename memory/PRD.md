@@ -21,14 +21,21 @@ Build JobPilot - a premium, cinematic landing page + full SaaS for an autonomous
 ## What's been implemented (2026-02-08)
 
 ### Hero Section Overhaul (2026-02-08)
-- New copy: "We apply only to jobs that fit YOU." with concrete LinkedIn/Indeed/Workday/Greenhouse mention
+- Title kept as "Your Job Search. On Autopilot." (user reverted this)
 - New trust badge: "Searching 120,000+ jobs daily" with live pulse dot
+- New subtext mentioning LinkedIn/Indeed/Workday/Greenhouse/company career pages
 - 6 floating platform chips evenly distributed around dashboard (added Workday + Greenhouse)
-- Dashboard ~20% larger (290px wide), centered properly (fixed framer-motion transform clash with translate-x/y-1/2)
+- Dashboard ~20% larger (290px wide), centered properly (fixed framer-motion transform clash with translate-x/y-1/2 by wrapping in a static centered div)
 - Slow ticking metrics: Apps 1247→1249, Response 34→35, Offers 7→8
 - CTA hierarchy: Black primary "Start Applying Today" + Ghost secondary "See How It Works"
 - Trust microcopy under CTAs: ✓ Targeted only · ✓ No spam · ✓ Human-reviewed
 - Orbit ring opacity reduced to ~25% (almost invisible) — chips feel natural
+
+### AI Skill-Scan Animation Fix (2026-02-08)
+- Added missing CSS animations: `jp-conic-slow` (rotating conic ring at 8s) and `jp-scan-beam` (rotating scan beam at 4.5s) — these classes were referenced but never defined
+- Refactored center AI brain so only the ring rotates while Sparkles icon stays static
+- Skill chips now pulse on a staggered 4.5s loop (one chip lights up every ~0.56s)
+- Connection lines from center to each skill now have traveling colored particles (SMIL animateMotion)
 
 ### Performance optimizations (2026-02-08)
 - Lazy-loaded below-the-fold landing sections (ScrollStory, BentoFeatures, ActivityFeed, Statistics, Pricing, FinalCTA, Footer)

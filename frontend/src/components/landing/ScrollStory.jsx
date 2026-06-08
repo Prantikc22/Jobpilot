@@ -236,17 +236,27 @@ function AIScanVisual() {
           {/* Dashed orbit ring */}
           <circle cx={CENTER} cy={CENTER} r={RING_R} fill="none" stroke="#d4d4d8" strokeWidth="1" strokeDasharray="4 6" opacity="0.6" />
 
-          {/* Connection lines from center to each skill (static, no SMIL) */}
+          {/* Connection lines + traveling particles from center to each skill */}
           {skills.map((s, i) => {
             const a = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
             const ex = CENTER + Math.cos(a) * RING_R;
             const ey = CENTER + Math.sin(a) * RING_R;
+            const pid = `scan-path-${i}`;
+            const dur = 2.6 + (i % 3) * 0.4;
             return (
-              <line
-                key={s.name}
-                x1={CENTER} y1={CENTER} x2={ex} y2={ey}
-                stroke="#e4e4e7" strokeWidth="1" strokeDasharray="2 4" opacity="0.55"
-              />
+              <g key={s.name}>
+                <line
+                  x1={CENTER} y1={CENTER} x2={ex} y2={ey}
+                  stroke="#e4e4e7" strokeWidth="1" strokeDasharray="2 4" opacity="0.55"
+                />
+                <path id={pid} d={`M ${CENTER} ${CENTER} L ${ex} ${ey}`} fill="none" stroke="none" />
+                <circle r="2.6" fill={s.color}>
+                  <animateMotion dur={`${dur}s`} repeatCount="indefinite" begin={`${i * 0.32}s`}>
+                    <mpath href={`#${pid}`} />
+                  </animateMotion>
+                  <animate attributeName="opacity" values="0;1;1;0" dur={`${dur}s`} repeatCount="indefinite" begin={`${i * 0.32}s`} />
+                </circle>
+              </g>
             );
           })}
 
@@ -267,10 +277,11 @@ function AIScanVisual() {
           className="absolute"
           style={{ left: "50%", top: "50%", width: 96, height: 96, transform: "translate(-50%, -50%)", zIndex: 30 }}
         >
-          <div className="jp-conic-slow absolute inset-0 rounded-full p-[2px]">
-            <div className="w-full h-full rounded-full bg-white flex items-center justify-center shadow-[0_18px_50px_-12px_rgba(15,23,42,0.25)]">
-              <Sparkles className="w-8 h-8 text-zinc-900" />
-            </div>
+          {/* Spinning conic ring (background only) */}
+          <div className="jp-conic-slow absolute inset-0 rounded-full" />
+          {/* Static center disc */}
+          <div className="absolute inset-[2px] rounded-full bg-white flex items-center justify-center shadow-[0_18px_50px_-12px_rgba(15,23,42,0.25)]">
+            <Sparkles className="w-8 h-8 text-zinc-900" />
           </div>
         </div>
 
@@ -282,10 +293,13 @@ function AIScanVisual() {
           return (
             <div
               key={s.name}
-              className="absolute"
+              className="absolute jp-skill-chip"
               style={{
                 left: "50%",
                 top: "50%",
+                "--cx": `${x}px`,
+                "--cy": `${y}px`,
+                "--i": i,
                 transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
                 zIndex: 20,
               }}
