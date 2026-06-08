@@ -45,27 +45,32 @@ function PlatformChip({ p, index, mx, my }) {
   const py = useTransform(my, (v) => y - v * 0.03 * sign);
 
   return (
-    <motion.div
-      style={{ left: "50%", top: "50%", x: px, y: py }}
-      initial={{ opacity: 0, scale: 0.6 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.5 + index * 0.08, duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
-      className="absolute -translate-x-1/2 -translate-y-1/2 z-30"
+    // Outer wrapper handles centering on parent center via top/left + Tailwind translate.
+    // Inner motion.div handles orbital offset + parallax via x/y motion values (no clash).
+    <div
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
     >
       <motion.div
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 4 + index * 0.3, repeat: Infinity, ease: "easeInOut", delay: index * 0.25 }}
-        className="jp-glass rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 flex items-center gap-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
+        style={{ x: px, y: py }}
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.5 + index * 0.08, duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
       >
-        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${p.color}1A` }}>
-          <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-        </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.16em] text-zinc-400 font-semibold">{p.name}</span>
-          <span className="text-[11px] sm:text-[12px] text-zinc-700 font-medium">{p.matches} new matches</span>
-        </div>
+        <motion.div
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 4 + index * 0.3, repeat: Infinity, ease: "easeInOut", delay: index * 0.25 }}
+          className="jp-glass rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 flex items-center gap-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)] -translate-x-1/2 -translate-y-1/2"
+        >
+          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${p.color}1A` }}>
+            <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.16em] text-zinc-400 font-semibold">{p.name}</span>
+            <span className="text-[11px] sm:text-[12px] text-zinc-700 font-medium">{p.matches} new matches</span>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -318,7 +323,7 @@ export default function Hero() {
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 </div>
-                <span className="font-mono text-[9px] text-zinc-400">jobpilot.ai</span>
+                <span className="font-mono text-[9px] text-zinc-400">Jobpilot AI</span>
               </div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">This Month</div>
               <div className="grid grid-cols-2 gap-2">
