@@ -14,7 +14,13 @@
 # Main and testing agents must follow this exact format to maintain testing data. 
 # The testing data must be entered in yaml format Below is the data structure:
 # 
-## user_problem_statement: {problem_statement}
+## ## Session 2026-06-08: Repo bring-up
+- Created missing `/app/backend/.env` and `/app/frontend/.env` (services were down for this reason).
+- Fixed `frontend/src/components/landing/ScrollStory.jsx` — removed an orphan `return (...)` block (lines 316–442) left over from an incomplete refactor of `AIScanVisual`; file now 427 lines and compiles cleanly.
+- Backend, frontend, mongodb all RUNNING under supervisor. `/api/health` returns `{"ok":true,"mongo":true}` both on localhost:8001 and via external URL.
+- Note: External preview URL initially served a stale `bundle.js` from an upstream cache despite multiple recompiles/restarts (`cf-cache-status: DYNAMIC`, `cache-control: no-store`). Local bundle on `localhost:3000` is fresh. Cache should age out at platform level.
+
+user_problem_statement: {problem_statement}
 ## backend:
 ##   - task: "Task name"
 ##     implemented: true
