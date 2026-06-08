@@ -1,4 +1,5 @@
 """User profile and onboarding routes."""
+import secrets as _secrets
 from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
@@ -24,7 +25,8 @@ class OnboardingPayload(BaseModel):
 
 
 def _generate_ref_code(email: str | None) -> str:
-    import secrets, string
+    import secrets
+    import string
     base = (email or "").split("@")[0][:6].upper() or "PILOT"
     base = "".join(c for c in base if c.isalnum()) or "PILOT"
     suffix = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
@@ -40,8 +42,7 @@ async def _ensure_user(db, sb_user: dict) -> dict:
         if not doc.get("referral_code"):
             patch["referral_code"] = _generate_ref_code(doc.get("email"))
         if not doc.get("pricing_variant"):
-            import secrets
-            patch["pricing_variant"] = "A" if secrets.randbelow(2) == 0 else "B"
+            patch["pricing_variant"] = "A" if _secrets.randbelow(2) == 0 else "B"
         # Auto-downgrade to free if subscription has expired
         if doc.get("plan") in ("starter", "pro") and doc.get("subscription_active_until"):
             try:
@@ -56,7 +57,6 @@ async def _ensure_user(db, sb_user: dict) -> dict:
             await db.users.update_one({"supabase_user_id": uid}, {"$set": patch})
             doc.update(patch)
         return doc
-    import secrets
     new_doc = {
         "supabase_user_id": uid,
         "email": sb_user.get("email"),
@@ -81,8 +81,8 @@ async def _ensure_user(db, sb_user: dict) -> dict:
         "onboarding_completed": False,
         "referral_code": _generate_ref_code(sb_user.get("email")),
         "referred_by_code": None,
-        "referral_credits": 0,  # bonus applications credited from referrals
-        "pricing_variant": "A" if secrets.randbelow(2) == 0 else "B",
+        "referral_credits": 0,
+        "pricing_variant": "A" if _secrets.randbelow(2) == 0 else "B",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }

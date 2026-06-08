@@ -37,6 +37,36 @@ export default function AdminDashboard() {
     });
   }, [nav]);
 
+  const [detail, setDetail] = useState(null); // {user, applications, orders}
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const openUser = async (supabase_user_id) => {
+    setDetailLoading(true);
+    setDetail({ loading: true });
+    try {
+      const { data } = await adminApi.get(`/admin/users/${supabase_user_id}`);
+      setDetail(data);
+    } catch {
+      toast.error("Couldn't load user");
+      setDetail(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const saveUserPatch = async (uid, patch) => {
+    try {
+      await adminApi.patch(`/admin/users/${uid}`, patch);
+      toast.success("Saved");
+      const { data } = await adminApi.get(`/admin/users/${uid}`);
+      setDetail(data);
+      const { data: usersResp } = await adminApi.get("/admin/users");
+      setUsers(usersResp.users);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Save failed");
+    }
+  };
+
   const changePlan = async (uid, plan) => {
     try {
       await adminApi.put(`/admin/users/${uid}/plan`, { plan });
@@ -142,7 +172,7 @@ export default function AdminDashboard() {
               </div>
             )}
           >
-            <Table cols={["Name", "Email", "Plan", "Applications", "Change plan"]}>
+            <Table cols={["Name", "Email", "Plan", "Applications", "Actions"]}>
               {filteredUsers.map((u) => (
                 <tr key={u.supabase_user_id} data-testid={`admin-user-row-${u.supabase_user_id}`}>
                   <td className="py-2.5 text-sm">{u.full_name || "—"}</td>
@@ -150,11 +180,14 @@ export default function AdminDashboard() {
                   <td className="py-2.5"><PlanPill plan={u.plan} /></td>
                   <td className="py-2.5 text-sm">{u.applications_count || 0}</td>
                   <td className="py-2.5">
-                    <select value={u.plan} onChange={(e) => changePlan(u.supabase_user_id, e.target.value)} className="text-sm px-3 py-1.5 rounded-full border border-zinc-200 bg-white" data-testid={`admin-plan-select-${u.supabase_user_id}`}>
-                      <option value="free">free</option>
-                      <option value="starter">starter</option>
-                      <option value="pro">pro</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <select value={u.plan} onChange={(e) => changePlan(u.supabase_user_id, e.target.value)} className="text-xs px-2.5 py-1.5 rounded-full border border-zinc-200 bg-white" data-testid={`admin-plan-select-${u.supabase_user_id}`}>
+                        <option value="free">free</option>
+                        <option value="starter">starter</option>
+                        <option value="pro">pro</option>
+                      </select>
+                      <button onClick={() => openUser(u.supabase_user_id)} className="text-xs px-3 py-1.5 rounded-full jp-btn-primary" data-testid={`admin-view-${u.supabase_user_id}`}>View</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -226,8 +259,105 @@ export default function AdminDashboard() {
             {!abStats && <div className="text-sm text-zinc-500">Loading…</div>}
           </div>
         )}
+
+        {detail && <UserDetailModal detail={detail} loading={detailLoading} onClose={() => setDetail(null)} onSave={saveUserPatch} />}
       </div>
     </div>
+  );
+}
+
+function UserDetailModal({ detail, loading, onClose, onSave }) {
+  const u = detail?.user;
+  const [edits, setEdits] = useState({});
+
+  // When a new user is loaded, reset edits via key change (parent uses different key per user)
+  const get = (field, fallback = "") => (edits[field] !== undefined ? edits[field] : (u?.[field] ?? fallback));
+  const set = (field, value) => setEdits((prev) => ({ ...prev, [field]: value }));
+
+  if (!detail) return null;
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm" onClick={onClose} data-testid="admin-user-modal">
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
+        {loading || !u ? (
+          <div className="p-10 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-400" /></div>
+        ) : (
+          <div className="p-6 md:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-xs uppercase tracking-[0.18em] text-zinc-400 font-semibold">User detail</div>
+                <h2 className="font-display text-2xl mt-1">{u.full_name || u.email}</h2>
+                <div className="text-sm text-zinc-500">{u.email} · joined {new Date(u.created_at).toLocaleDateString()}</div>
+              </div>
+              <button onClick={onClose} className="text-sm text-zinc-500 hover:text-zinc-900" data-testid="admin-modal-close">Close</button>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3 mt-4">
+              <AdminField label="Full name" value={get("full_name")} onChange={(v) => set("full_name", v)} testid="admin-edit-name" />
+              <AdminField label="Phone" value={get("phone")} onChange={(v) => set("phone", v)} testid="admin-edit-phone" />
+              <AdminField label="LinkedIn URL" value={get("linkedin_url")} onChange={(v) => set("linkedin_url", v)} testid="admin-edit-linkedin" />
+              <AdminField label="Preferred salary" value={get("preferred_salary")} onChange={(v) => set("preferred_salary", v)} testid="admin-edit-salary" />
+              <label className="block">
+                <span className="text-xs uppercase tracking-[0.16em] text-zinc-500 font-semibold">Plan</span>
+                <select value={get("plan", "free")} onChange={(e) => set("plan", e.target.value)} className="mt-1.5 w-full px-3 py-2 rounded-xl border border-zinc-200 text-sm" data-testid="admin-edit-plan">
+                  <option value="free">free</option>
+                  <option value="starter">starter</option>
+                  <option value="pro">pro</option>
+                </select>
+              </label>
+              <AdminField label="Applications" type="number" value={String(get("applications_count", 0))} onChange={(v) => set("applications_count", parseInt(v) || 0)} testid="admin-edit-apps" />
+              <AdminField label="Interviews" type="number" value={String(get("interviews_count", 0))} onChange={(v) => set("interviews_count", parseInt(v) || 0)} testid="admin-edit-interviews" />
+              <AdminField label="Offers" type="number" value={String(get("offers_count", 0))} onChange={(v) => set("offers_count", parseInt(v) || 0)} testid="admin-edit-offers" />
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={onClose} className="jp-btn-secondary px-4 py-2 rounded-full text-sm">Cancel</button>
+              <button onClick={() => onSave(u.supabase_user_id, edits)} className="jp-btn-primary px-4 py-2 rounded-full text-sm" data-testid="admin-save-user">Save changes</button>
+            </div>
+
+            <div className="mt-7">
+              <div className="text-xs uppercase tracking-[0.18em] text-zinc-400 font-semibold mb-2">Applications ({detail.applications.length})</div>
+              <div className="border border-zinc-100 rounded-xl divide-y divide-zinc-100 max-h-48 overflow-y-auto">
+                {detail.applications.length === 0 && <div className="px-4 py-3 text-sm text-zinc-400">No applications yet</div>}
+                {detail.applications.map((a) => (
+                  <div key={a.id} className="px-4 py-2.5 flex items-center justify-between text-sm">
+                    <div><span className="font-semibold">{a.company}</span><span className="text-zinc-400"> · {a.role}</span></div>
+                    <div className="text-xs text-zinc-400 font-mono">{new Date(a.submitted_at).toLocaleDateString()}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="text-xs uppercase tracking-[0.18em] text-zinc-400 font-semibold mb-2">Orders ({detail.orders.length})</div>
+              <div className="border border-zinc-100 rounded-xl divide-y divide-zinc-100 max-h-40 overflow-y-auto">
+                {detail.orders.length === 0 && <div className="px-4 py-3 text-sm text-zinc-400">No orders yet</div>}
+                {detail.orders.map((o) => (
+                  <div key={o.razorpay_order_id} className="px-4 py-2.5 flex items-center justify-between text-sm">
+                    <div><PlanPill plan={o.plan} /> <span className="ml-2">₹{(o.amount / 100).toLocaleString()}</span></div>
+                    <div className="text-xs"><span className={`px-2 py-0.5 rounded-full ${o.status === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-600"}`}>{o.status}</span></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
+function AdminField({ label, value, onChange, type = "text", testid }) {
+  return (
+    <label className="block">
+      <span className="text-xs uppercase tracking-[0.16em] text-zinc-500 font-semibold">{label}</span>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="mt-1.5 w-full px-3 py-2 rounded-xl border border-zinc-200 outline-none focus:border-zinc-900 text-sm" data-testid={testid} />
+    </label>
   );
 }
 

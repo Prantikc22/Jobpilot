@@ -25,13 +25,13 @@ const BRAND_MARKS = {
 // 5 platforms placed AT a single orbital radius using polar coords.
 // We use degrees from 12-o'clock (−90deg start) so positions feel intentional.
 // Card size ≈ 156×52; box is 540×540 → orbit radius 220 leaves 50px margin.
-const ORBIT_RADIUS = 218;
+const ORBIT_RADIUS = 195;
 const PLATFORMS = [
-  { name: "LinkedIn",  color: "#0A66C2", deg:  -64, matches: 12 },
-  { name: "Indeed",    color: "#2557A7", deg:  -132, matches: 8 },
-  { name: "Wellfound", color: "#FF564B", deg: 165, matches: 4 },
-  { name: "Glassdoor", color: "#0CAA41", deg:   95, matches: 6 },
-  { name: "Workday",   color: "#F38B00", deg:   30, matches: 9 },
+  { name: "LinkedIn",  color: "#0A66C2", deg:  -55, matches: 12 },
+  { name: "Indeed",    color: "#2557A7", deg:  -130, matches: 8 },
+  { name: "Wellfound", color: "#FF564B", deg: 175, matches: 4 },
+  { name: "Glassdoor", color: "#0CAA41", deg:   140, matches: 6 },
+  { name: "Workday",   color: "#F38B00", deg:   55, matches: 9 },
 ];
 
 function polar(deg, r) {
@@ -71,43 +71,25 @@ function PlatformChip({ p, index, mx, my }) {
 }
 
 function ConnectionLines() {
-  // Lines from center (0,0) to each platform; values are within a 540x540 viewBox where center = 270,270.
   return (
-    <svg viewBox="0 0 540 540" className="absolute inset-0 w-full h-full pointer-events-none z-10">
+    <svg viewBox="0 0 480 480" className="absolute inset-0 w-full h-full pointer-events-none z-10" preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#9ca3af" stopOpacity="0" />
           <stop offset="0.5" stopColor="#9ca3af" stopOpacity="0.45" />
           <stop offset="1" stopColor="#9ca3af" stopOpacity="0" />
         </linearGradient>
-        <radialGradient id="dotGlow" r="50%">
-          <stop offset="0" stopColor="#3b82f6" stopOpacity="1" />
-          <stop offset="1" stopColor="#3b82f6" stopOpacity="0" />
-        </radialGradient>
       </defs>
       {PLATFORMS.map((p, i) => {
         const { x, y } = polar(p.deg, ORBIT_RADIUS);
-        const cx = 270 + x;
-        const cy = 270 + y;
+        const cx = 240 + x;
+        const cy = 240 + y;
         const pathId = `path-${p.name}`;
         return (
           <g key={p.name}>
-            <path
-              id={pathId}
-              d={`M 270 270 L ${cx} ${cy}`}
-              stroke="url(#lineGrad)"
-              strokeWidth="1"
-              fill="none"
-              strokeDasharray="3 4"
-              opacity="0.7"
-            />
+            <path id={pathId} d={`M 240 240 L ${cx} ${cy}`} stroke="url(#lineGrad)" strokeWidth="1" fill="none" strokeDasharray="3 4" opacity="0.7" />
             <circle r="3.5" fill={p.color}>
-              <animateMotion
-                dur={`${3.5 + i * 0.4}s`}
-                repeatCount="indefinite"
-                begin={`${i * 0.5}s`}
-                rotate="auto"
-              >
+              <animateMotion dur={`${3.5 + i * 0.4}s`} repeatCount="indefinite" begin={`${i * 0.5}s`} rotate="auto">
                 <mpath href={`#${pathId}`} />
               </animateMotion>
               <animate attributeName="opacity" values="0;1;1;0" dur={`${3.5 + i * 0.4}s`} repeatCount="indefinite" begin={`${i * 0.5}s`} />
@@ -238,30 +220,28 @@ export default function Hero() {
         </div>
 
         {/* Right: Living dashboard with orbital platforms */}
-        <div className="relative w-full mx-auto" style={{ maxWidth: 540 }}>
+        <div className="relative w-full mx-auto" style={{ maxWidth: 480 }}>
           <div className="relative aspect-square">
             {/* Soft halo behind */}
-            <div className="absolute inset-10 rounded-full bg-gradient-to-br from-blue-100/40 via-violet-100/40 to-rose-100/30 blur-2xl" />
+            <div className="absolute inset-8 rounded-full bg-gradient-to-br from-blue-100/40 via-violet-100/40 to-rose-100/30 blur-2xl" />
 
-            {/* Rotating orbital ring (the single source of truth - platforms sit ON it) */}
+            {/* Rotating orbital ring */}
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
               className="absolute inset-0 rounded-full"
-              style={{ padding: "44px" }}
+              style={{ padding: "40px" }}
             >
               <div className="w-full h-full rounded-full border border-dashed border-zinc-300/80" />
             </motion.div>
 
-            {/* Connection lines from center to each platform (SVG with traveling dots) */}
             <ConnectionLines />
 
-            {/* Platform chips placed AT polar coords on the ring */}
             {PLATFORMS.map((p, i) => (
               <PlatformChip key={p.name} p={p} index={i} mx={smoothX} my={smoothY} />
             ))}
 
-            {/* Orbiting paper airplane that follows the ring */}
+            {/* Orbiting paper airplane */}
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
@@ -271,9 +251,9 @@ export default function Hero() {
                 <motion.div
                   animate={{ rotate: -360 }}
                   transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-                  className="w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center border border-zinc-200"
+                  className="w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center border border-zinc-200"
                 >
-                  <Plane className="w-3.5 h-3.5 text-zinc-900 -rotate-45" />
+                  <Plane className="w-3 h-3 text-zinc-900 -rotate-45" />
                 </motion.div>
               </div>
             </motion.div>
@@ -284,27 +264,27 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.9, delay: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
               style={{ rotateY: dashTilt, rotateX: dashTiltY, transformStyle: "preserve-3d", transformPerspective: 1200 }}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] sm:w-[300px] z-40 jp-glass rounded-3xl p-5 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.25)]"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[240px] sm:w-[260px] z-40 jp-glass rounded-3xl p-4 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.25)]"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-rose-400" />
-                  <div className="w-2 h-2 rounded-full bg-amber-400" />
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 </div>
-                <span className="font-mono text-[10px] text-zinc-400">jobpilot.ai</span>
+                <span className="font-mono text-[9px] text-zinc-400">jobpilot.ai</span>
               </div>
-              <div className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">This Month</div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">This Month</div>
+              <div className="grid grid-cols-2 gap-2">
                 <Stat label="Apps" value={apps.toLocaleString()} accent="from-blue-500 to-indigo-500" />
                 <Stat label="Interviews" value={interviews} accent="from-violet-500 to-fuchsia-500" />
                 <Stat label="Response" value={`${responseRate}%`} accent="from-emerald-500 to-teal-500" />
                 <Stat label="Offers" value={offers} accent="from-amber-500 to-orange-500" />
               </div>
-              <div className="mt-3 pt-3 border-t border-zinc-200/60 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[11px] text-zinc-500">Pilot active</span>
+              <div className="mt-2.5 pt-2.5 border-t border-zinc-200/60 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] text-zinc-500">Pilot active</span>
                 </div>
                 <span className="font-mono text-[10px] text-zinc-600">14:32</span>
               </div>

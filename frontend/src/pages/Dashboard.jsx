@@ -133,6 +133,9 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* AI Tools */}
           <div className="lg:col-span-1 space-y-4">
+            <SectionLabel>Your resume</SectionLabel>
+            <ResumeManager profile={profile} onUpdated={refresh} />
+
             <SectionLabel>Share & invite</SectionLabel>
             <ShareWidget profile={profile} />
             <ReferralWidget />

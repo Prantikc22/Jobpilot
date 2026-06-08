@@ -45,7 +45,32 @@ export default function ScrollStory() {
 
   return (
     <section id="story" ref={wrapperRef} className="relative" data-testid="scroll-story">
-      <div className="h-[500vh]">
+      {/* Mobile: simple stacked acts. Desktop: sticky scroll storytelling. */}
+      <div className="lg:hidden max-w-2xl mx-auto px-6 py-20 space-y-12" data-testid="scroll-story-mobile">
+        <div>
+          <span className="text-xs uppercase tracking-[0.24em] text-zinc-400 font-semibold">The story</span>
+          <h2 className="font-display mt-3 text-3xl tracking-[-0.03em] leading-[1.05] text-zinc-900 font-medium">
+            Five steps. <span className="text-zinc-400">Zero applications by you.</span>
+          </h2>
+        </div>
+        {ACTS.map((a, i) => {
+          const Icon = a.icon;
+          return (
+            <div key={a.n} className="flex gap-4">
+              <div className="font-mono text-xs text-zinc-400 w-8 shrink-0 mt-1.5">{a.n}</div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <Icon className="w-4 h-4 text-zinc-700" />
+                  <h3 className="font-display text-lg text-zinc-900 font-medium">{a.title}</h3>
+                </div>
+                <p className="mt-1.5 text-sm text-zinc-500 leading-relaxed">{a.sub}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden lg:block h-[500vh]">
         <div className="sticky top-0 h-screen overflow-hidden">
           <div className="absolute inset-0 jp-dot-grid opacity-20 pointer-events-none" aria-hidden />
           <div className="max-w-7xl mx-auto px-6 md:px-8 h-full grid lg:grid-cols-2 items-center gap-12">
@@ -186,53 +211,18 @@ function AIScanVisual() {
     { name: "PostgreSQL", color: "#10b981" },
     { name: "ML Ops",     color: "#f43f5e" },
   ];
-  const SIZE = 460;
+  const SIZE = 440;
   const CENTER = SIZE / 2;
-  const RING_RADIUS = 180;
+  const RING_RADIUS = 170;
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      <div className="relative" style={{ width: SIZE, height: SIZE }}>
-        {/* Soft halo */}
-        <div className="absolute inset-12 rounded-full bg-gradient-to-br from-blue-100/60 via-violet-100/50 to-rose-100/40 blur-2xl" />
+      <div className="relative mx-auto" style={{ width: SIZE, height: SIZE }}>
+        {/* Soft halo behind */}
+        <div className="absolute inset-12 rounded-full bg-gradient-to-br from-blue-100/60 via-violet-100/50 to-rose-100/40 blur-2xl" aria-hidden />
 
-        {/* Resume card on the LEFT (the source) */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="absolute -left-2 top-1/2 -translate-y-1/2 z-30"
-        >
-          <div className="jp-card rounded-xl p-3 w-[110px] shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-6 rounded-sm bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center">
-                <FileText className="w-2.5 h-2.5 text-rose-600" />
-              </div>
-              <div className="text-[9px] font-semibold text-zinc-800 leading-tight">Resume.pdf</div>
-            </div>
-            <div className="mt-2 space-y-1">
-              {[80, 60, 90, 70].map((w, i) => (
-                <motion.div
-                  key={i}
-                  animate={{ opacity: [0.4, 1, 0.4] }}
-                  transition={{ duration: 1.6, delay: i * 0.15, repeat: Infinity }}
-                  className="h-1 rounded-full bg-zinc-200"
-                  style={{ width: `${w}%` }}
-                />
-              ))}
-            </div>
-            {/* Scan line traveling down */}
-            <motion.div
-              animate={{ y: ["0%", "260%", "0%"] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute left-1 right-1 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent"
-              style={{ top: 30 }}
-            />
-          </div>
-        </motion.div>
-
-        {/* SVG: rotating orbital ring + connection lines + traveling skill particles */}
-        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="absolute inset-0 w-full h-full">
+        {/* SVG: orbital ring + radar pulses + connection lines + traveling skill particles */}
+        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
           <defs>
             <radialGradient id="scanGlow" r="50%">
               <stop offset="0" stopColor="#3b82f6" stopOpacity="0.3" />
@@ -246,33 +236,27 @@ function AIScanVisual() {
             </linearGradient>
           </defs>
 
-          {/* Glow behind center */}
+          {/* Central glow */}
           <circle cx={CENTER} cy={CENTER} r="90" fill="url(#scanGlow)" />
 
-          {/* Rotating orbit (animated via SMIL) */}
-          <g style={{ transformOrigin: `${CENTER}px ${CENTER}px` }}>
-            <animateTransform attributeName="transform" type="rotate" from={`0 ${CENTER} ${CENTER}`} to={`360 ${CENTER} ${CENTER}`} dur="40s" repeatCount="indefinite" />
-            <circle cx={CENTER} cy={CENTER} r={RING_RADIUS} fill="none" stroke="#d4d4d8" strokeWidth="1" strokeDasharray="4 6" opacity="0.7" />
-          </g>
+          {/* Static dashed orbit (no rotation - keeps it visually stable & centered) */}
+          <circle cx={CENTER} cy={CENTER} r={RING_RADIUS} fill="none" stroke="#d4d4d8" strokeWidth="1" strokeDasharray="4 6" opacity="0.7" />
 
-          {/* Pulsing scan rings emanating from center */}
+          {/* Radar pulse rings emanating from center */}
           {[0, 1, 2].map((i) => (
-            <circle
-              key={i}
-              cx={CENTER}
-              cy={CENTER}
-              r="50"
-              fill="none"
-              stroke="#3b82f6"
-              strokeWidth="1"
-              opacity="0"
-            >
+            <circle key={i} cx={CENTER} cy={CENTER} r="50" fill="none" stroke="#3b82f6" strokeWidth="1" opacity="0">
               <animate attributeName="r" from="50" to={RING_RADIUS} dur="3s" begin={`${i * 1}s`} repeatCount="indefinite" />
               <animate attributeName="opacity" values="0;0.4;0" dur="3s" begin={`${i * 1}s`} repeatCount="indefinite" />
             </circle>
           ))}
 
-          {/* Connection lines + traveling skill particles from center to each skill */}
+          {/* Rotating scan beam (single sweep line) */}
+          <g style={{ transformOrigin: `${CENTER}px ${CENTER}px` }}>
+            <animateTransform attributeName="transform" type="rotate" from={`0 ${CENTER} ${CENTER}`} to={`360 ${CENTER} ${CENTER}`} dur="6s" repeatCount="indefinite" />
+            <line x1={CENTER} y1={CENTER} x2={CENTER + RING_RADIUS} y2={CENTER} stroke="#3b82f6" strokeWidth="2" opacity="0.5" />
+          </g>
+
+          {/* Connection lines + traveling skill particles from center to each skill on the ring */}
           {skills.map((s, i) => {
             const angle = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
             const ex = CENTER + Math.cos(angle) * RING_RADIUS;
@@ -292,32 +276,27 @@ function AIScanVisual() {
           })}
         </svg>
 
-        {/* Central AI brain - bigger, more prominent */}
+        {/* Central AI brain — perfectly centered with translate */}
         <motion.div
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.6 }}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[120px] h-[120px] z-20"
+          className="absolute left-1/2 top-1/2 z-20"
+          style={{ transform: "translate(-50%, -50%)", width: 110, height: 110 }}
         >
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
             className="absolute inset-0 rounded-full jp-conic p-[2px]"
           />
-          <div className="absolute inset-1 rounded-full bg-white flex items-center justify-center shadow-[0_20px_60px_-12px_rgba(15,23,42,0.25)]">
+          <div className="absolute inset-[3px] rounded-full bg-white flex items-center justify-center shadow-[0_20px_60px_-12px_rgba(15,23,42,0.25)]">
             <motion.div
               animate={{ scale: [1, 1.12, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Sparkles className="w-10 h-10 text-zinc-900" />
+              <Sparkles className="w-9 h-9 text-zinc-900" />
             </motion.div>
           </div>
-          {/* Inner ping */}
-          <motion.div
-            animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-3 rounded-full border-2 border-blue-400/50"
-          />
         </motion.div>
 
         {/* Skill chips placed ON the orbital ring */}
@@ -331,8 +310,8 @@ function AIScanVisual() {
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 + i * 0.08, duration: 0.5 }}
-              style={{ left: "50%", top: "50%", x, y }}
-              className="absolute -translate-x-1/2 -translate-y-1/2 z-30"
+              className="absolute left-1/2 top-1/2 z-30"
+              style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}
             >
               <motion.div
                 animate={{ y: [0, -3, 0] }}
@@ -346,12 +325,13 @@ function AIScanVisual() {
           );
         })}
 
-        {/* Status pill */}
+        {/* Status pill at bottom (positioned relative to outer container so it doesn't break the centered ring) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.5 }}
-          className="absolute left-1/2 bottom-2 -translate-x-1/2 z-30"
+          className="absolute left-1/2 -translate-x-1/2 z-30 whitespace-nowrap"
+          style={{ bottom: -8 }}
         >
           <div className="jp-glass rounded-full px-3 py-1.5 flex items-center gap-2 text-[11px] font-medium text-zinc-700">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -434,6 +414,9 @@ function CalendarVisual() {
   );
 }
 
+const CONFETTI_OFFSETS = [-90, 60, -40, 100, -75, 30, -110, 80, -25, 95, -60, 50];
+const CONFETTI_COLORS = ["bg-blue-500", "bg-violet-500", "bg-pink-500", "bg-amber-500", "bg-emerald-500"];
+
 function OfferVisual() {
   return (
     <div className="relative w-full h-full flex items-center justify-center">
@@ -456,16 +439,18 @@ function OfferVisual() {
           </div>
           <div className="text-emerald-600 text-sm font-semibold">Accepted</div>
         </div>
-        {[...Array(12)].map((_, i) => (
-          <motion.span
-            key={i}
-            initial={{ y: 0, x: 0, opacity: 0 }}
-            animate={{ y: -200, x: (Math.random() - 0.5) * 220, opacity: [0, 1, 0] }}
-            transition={{ duration: 2.5, delay: i * 0.1, repeat: Infinity, repeatDelay: 1.5 }}
-            className="absolute left-1/2 bottom-1/2 w-1.5 h-1.5 rounded-full"
-            style={{ background: ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"][i % 5] }}
-          />
-        ))}
+        {CONFETTI_OFFSETS.map((dx, i) => {
+          const colorClass = CONFETTI_COLORS[i % 5];
+          return (
+            <motion.span
+              key={i}
+              initial={{ y: 0, x: 0, opacity: 0 }}
+              animate={{ y: -200, x: dx, opacity: [0, 1, 0] }}
+              transition={{ duration: 2.5, delay: i * 0.1, repeat: Infinity, repeatDelay: 1.5 }}
+              className={`absolute left-1/2 bottom-1/2 w-1.5 h-1.5 rounded-full ${colorClass}`}
+            />
+          );
+        })}
       </motion.div>
     </div>
   );

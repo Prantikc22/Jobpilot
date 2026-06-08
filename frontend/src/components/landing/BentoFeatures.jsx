@@ -63,7 +63,7 @@ export default function BentoFeatures() {
           />
 
           <FeatureCard
-            cls="col-span-1 md:col-span-4"
+            cls="col-span-1 md:col-span-6"
             icon={ShieldCheck}
             color="from-amber-500 to-orange-500"
             title="Career Shield"
@@ -72,7 +72,7 @@ export default function BentoFeatures() {
           />
 
           <FeatureCard
-            cls="col-span-1 md:col-span-4"
+            cls="col-span-1 md:col-span-6"
             icon={ClipboardList}
             color="from-zinc-700 to-zinc-900"
             title="Application Tracker"
