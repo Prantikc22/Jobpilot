@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Plane, LogOut, Upload, Rocket, FileText, Sparkles, ShieldCheck, Linkedin, Loader2, Briefcase, CheckCircle2, ArrowUpRight, Activity } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Plane, LogOut, FileText, Sparkles, ShieldCheck, Linkedin, Loader2,
+  Briefcase, CheckCircle2, ArrowUpRight, Rocket, Zap, Activity,
+  Radar, Clock,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
@@ -13,8 +17,10 @@ export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
   const nav = useNavigate();
   const [profile, setProfile] = useState(null);
-  const [jobs, setJobs] = useState([]);
   const [apps, setApps] = useState([]);
+  const [queue, setQueue] = useState([]);
+  const [status, setStatus] = useState(null);
+  const [credits, setCredits] = useState(null);
   const [loadingAI, setLoadingAI] = useState(null);
   const [aiPanel, setAiPanel] = useState(null);
 
@@ -22,58 +28,69 @@ export default function Dashboard() {
     if (authLoading) return;
     if (!user) { nav("/signin"); return; }
     refresh();
+    const t = setInterval(refresh, 30_000); // live-poll every 30s
+    return () => clearInterval(t);
   }, [user, authLoading]);
 
   async function refresh() {
     try {
-      const [me, rec, history] = await Promise.all([
+      const [me, q, hist, st, cr] = await Promise.all([
         api.get("/users/me"),
-        api.get("/jobs/recommendations"),
+        api.get("/jobs/queue"),
         api.get("/jobs/applications"),
+        api.get("/jobs/autopilot-status"),
+        api.get("/ai/credits"),
       ]);
       setProfile(me.data);
-      setJobs(rec.data.jobs || []);
-      setApps(history.data.applications || []);
+      setQueue(q.data.queue || []);
+      setApps(hist.data.applications || []);
+      setStatus(st.data);
+      setCredits(cr.data);
     } catch (e) {
-      toast.error("Failed to load dashboard");
+      // silent — dashboard re-polls
     }
   }
 
   const runAI = async (key, fn, label) => {
+    if (credits && credits.remaining <= 0) {
+      toast.error(`You've used all ${credits.total} AI credits this month. They reset on the 1st.`);
+      return;
+    }
     setLoadingAI(key);
     setAiPanel(null);
     try {
       const result = await fn();
       setAiPanel({ key, label, result });
+      // refresh credits after a successful call
+      api.get("/ai/credits").then((r) => setCredits(r.data)).catch(() => {});
     } catch (e) {
-      toast.error(e.response?.data?.detail || "AI failed");
+      const status = e.response?.status;
+      const detail = e.response?.data?.detail || "AI failed";
+      if (status === 402) {
+        toast.error(detail);
+        api.get("/ai/credits").then((r) => setCredits(r.data)).catch(() => {});
+      } else if (status === 503) {
+        toast.error(detail);
+      } else {
+        toast.error(detail);
+      }
     } finally {
       setLoadingAI(null);
     }
   };
 
-  const apply = async (job) => {
-    try {
-      await api.post("/jobs/apply", { job_id: job.id });
-      toast.success(`Applied to ${job.company}`);
-      refresh();
-    } catch (e) {
-      const detail = e.response?.data?.detail || "Apply failed";
-      if (String(detail).includes("Starter or Pro")) {
-        toast.error("Auto-apply requires Starter or Pro. Redirecting…");
-        setTimeout(() => nav("/pricing-checkout"), 1200);
-      } else {
-        toast.error(detail);
-      }
-    }
-  };
-
   if (authLoading || !profile) {
-    return <div className="min-h-screen flex items-center justify-center bg-white"><Loader2 className="w-6 h-6 animate-spin text-zinc-400" /></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+      </div>
+    );
   }
 
   const plan = profile.plan || "free";
-  const planLimit = { free: 10, starter: 100, pro: 300 }[plan];
+  const planLimit = { free: 0, starter: 100, pro: 300 }[plan];
+  const submittedThisMonth = status?.applications_count ?? profile.applications_count ?? 0;
+  const remaining = status?.remaining ?? Math.max(0, planLimit - submittedThisMonth);
 
   return (
     <div className="min-h-screen bg-zinc-50/40" data-testid="dashboard-page">
@@ -95,7 +112,11 @@ export default function Dashboard() {
                 <span className="hidden sm:inline">Upgrade · </span>₹499
               </Link>
             )}
-            <button onClick={async () => { await signOut(); nav("/"); }} className="text-xs sm:text-sm text-zinc-500 hover:text-zinc-900 inline-flex items-center gap-1.5" data-testid="dashboard-signout">
+            <button
+              onClick={async () => { await signOut(); nav("/"); }}
+              className="text-xs sm:text-sm text-zinc-500 hover:text-zinc-900 inline-flex items-center gap-1.5"
+              data-testid="dashboard-signout"
+            >
               <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Sign out</span>
             </button>
           </div>
@@ -103,99 +124,270 @@ export default function Dashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10">
-        {/* Greeting + hero KPIs */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 sm:gap-6 mb-6 sm:mb-8">
-          <div>
-            <span className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold">Welcome back</span>
-            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-[-0.03em] text-zinc-900 font-medium mt-1">
-              Hi, {(profile.full_name || user.email || "").split(" ")[0] || "there"}.
-            </h1>
-            <p className="text-sm sm:text-base text-zinc-500 mt-1.5">Your pilot is {plan === "free" ? "in recon mode" : "actively flying"} · {planLimit} applications / month</p>
-          </div>
-          <div className="grid grid-cols-3 md:flex md:flex-wrap gap-2 sm:gap-3">
-            <KPI label="Applications" value={profile.applications_count || 0} testid="kpi-apps" />
-            <KPI label="Interviews" value={profile.interviews_count || 0} testid="kpi-interviews" />
-            <KPI label="Offers" value={profile.offers_count || 0} testid="kpi-offers" />
-          </div>
+        {/* Hero: autopilot status */}
+        <AutopilotHero profile={profile} status={status} plan={plan} remaining={remaining} />
+
+        {/* AI credits + KPIs row */}
+        <div className="grid md:grid-cols-4 gap-4 mt-6">
+          <CreditsCard credits={credits} />
+          <KPI icon={Briefcase} label="Applications" value={submittedThisMonth} sub={`of ${planLimit || "—"} this month`} testid="kpi-apps" />
+          <KPI icon={Activity} label="Interviews" value={profile.interviews_count || 0} sub="tracked" testid="kpi-interviews" />
+          <KPI icon={Rocket} label="Offers" value={profile.offers_count || 0} sub="🎉" testid="kpi-offers" />
         </div>
 
         {/* Free tier banner */}
         {plan === "free" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-gradient-to-r from-zinc-950 to-zinc-800 text-white p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4" data-testid="free-tier-banner">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-gradient-to-r from-zinc-950 to-zinc-800 text-white p-4 sm:p-5 md:p-6 mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
+            data-testid="free-tier-banner"
+          >
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0"><Rocket className="w-5 h-5" /></div>
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                <Rocket className="w-5 h-5" />
+              </div>
               <div>
-                <div className="font-semibold text-sm sm:text-base">Auto-apply is locked on Free</div>
-                <div className="text-xs sm:text-sm text-white/60">Run AI resume update, ATS check, LinkedIn optimizer and see 10 matched jobs. Unlock auto-apply with Starter.</div>
+                <div className="font-semibold text-sm sm:text-base">Autopilot is paused on Free</div>
+                <div className="text-xs sm:text-sm text-white/60">You still get 3 AI credits/month and can preview jobs. Upgrade to unlock the autopilot — we’ll apply on your behalf.</div>
               </div>
             </div>
-            <Link to="/pricing-checkout" className="bg-white text-zinc-900 text-sm px-4 py-2 rounded-full font-medium hover:bg-zinc-100 inline-flex items-center gap-2 shrink-0 self-start sm:self-auto" data-testid="free-tier-upgrade">Upgrade <ArrowUpRight className="w-4 h-4" /></Link>
+            <Link to="/pricing-checkout" className="bg-white text-zinc-900 text-sm px-4 py-2 rounded-full font-medium hover:bg-zinc-100 inline-flex items-center gap-2 shrink-0 self-start sm:self-auto" data-testid="free-tier-upgrade">
+              Upgrade <ArrowUpRight className="w-4 h-4" />
+            </Link>
           </motion.div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-5 sm:gap-6">
-          {/* AI Tools */}
+        <div className="grid lg:grid-cols-3 gap-5 sm:gap-6 mt-6 sm:mt-8">
+          {/* Left rail: resume + AI tools */}
           <div className="lg:col-span-1 space-y-4">
             <SectionLabel>Your resume</SectionLabel>
             <ResumeManager profile={profile} onUpdated={refresh} />
 
+            <div className="flex items-center justify-between mt-2">
+              <SectionLabel>AI tools</SectionLabel>
+              {credits && (
+                <span className="text-[11px] text-zinc-500 font-mono">
+                  {credits.remaining}/{credits.total} credits left
+                </span>
+              )}
+            </div>
+            <AITool
+              icon={Sparkles}
+              title="AI Resume Optimizer"
+              desc="Per-role rewrite + ATS uplift"
+              busy={loadingAI === "opt"}
+              disabled={!credits || credits.remaining <= 0}
+              onRun={() => runAI("opt", () => api.post("/ai/optimize-resume", {}).then(r => r.data), "Resume Optimizer")}
+              testid="ai-resume-optimizer"
+            />
+            <AITool
+              icon={FileText}
+              title="ATS Checker"
+              desc="Real ATS score + fixes"
+              busy={loadingAI === "ats"}
+              disabled={!credits || credits.remaining <= 0}
+              onRun={() => runAI("ats", () => api.post("/ai/ats-check").then(r => r.data), "ATS Checker")}
+              testid="ai-ats-checker"
+            />
+            <AITool
+              icon={Linkedin}
+              title="LinkedIn Optimizer"
+              desc="Headline + About + Skills"
+              busy={loadingAI === "li"}
+              disabled={!credits || credits.remaining <= 0}
+              onRun={() => runAI("li", () => api.post("/ai/linkedin-optimize").then(r => r.data), "LinkedIn Optimizer")}
+              testid="ai-linkedin"
+            />
+            <AITool
+              icon={ShieldCheck}
+              title="Parse Resume"
+              desc="Structured extraction"
+              busy={loadingAI === "parse"}
+              disabled={!credits || credits.remaining <= 0}
+              onRun={() => runAI("parse", () => api.post("/resumes/parse").then(r => r.data), "Resume Parser")}
+              testid="ai-parse"
+            />
+
+            <AnimatePresence>
+              {aiPanel && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="jp-card rounded-2xl p-5 mt-2"
+                  data-testid="ai-result-panel"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold">{aiPanel.label} · result</h3>
+                    <button onClick={() => setAiPanel(null)} className="text-xs text-zinc-400 hover:text-zinc-700">close</button>
+                  </div>
+                  <pre className="text-xs bg-zinc-50 rounded-xl p-3 overflow-auto max-h-80 leading-relaxed text-zinc-700 font-mono">{JSON.stringify(aiPanel.result, null, 2)}</pre>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <SectionLabel>Share & invite</SectionLabel>
             <ShareWidget profile={profile} />
             <ReferralWidget />
-
-            <SectionLabel>AI tools</SectionLabel>
-            <AITool icon={Sparkles} title="AI Resume Optimizer" desc="Per-role rewrite + ATS uplift" busy={loadingAI === "opt"} onRun={() => runAI("opt", () => api.post("/ai/optimize-resume", {}).then(r => r.data), "Resume Optimizer")} testid="ai-resume-optimizer" />
-            <AITool icon={FileText} title="ATS Checker" desc="Real ATS score + fixes" busy={loadingAI === "ats"} onRun={() => runAI("ats", () => api.post("/ai/ats-check").then(r => r.data), "ATS Checker")} testid="ai-ats-checker" />
-            <AITool icon={Linkedin} title="LinkedIn Optimizer" desc="Headline + About + Skills" busy={loadingAI === "li"} onRun={() => runAI("li", () => api.post("/ai/linkedin-optimize").then(r => r.data), "LinkedIn Optimizer")} testid="ai-linkedin" />
-            <AITool icon={ShieldCheck} title="Parse Resume" desc="Structured extraction" busy={loadingAI === "parse"} onRun={() => runAI("parse", () => api.post("/resumes/parse").then(r => r.data), "Resume Parser")} testid="ai-parse" />
-
-            {aiPanel && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="jp-card rounded-2xl p-5 mt-2" data-testid="ai-result-panel">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold">{aiPanel.label} · result</h3>
-                  <button onClick={() => setAiPanel(null)} className="text-xs text-zinc-400 hover:text-zinc-700">close</button>
-                </div>
-                <pre className="text-xs bg-zinc-50 rounded-xl p-3 overflow-auto max-h-80 leading-relaxed text-zinc-700 font-mono">{JSON.stringify(aiPanel.result, null, 2)}</pre>
-              </motion.div>
-            )}
           </div>
 
-          {/* Matched jobs */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <SectionLabel>Matched jobs · {jobs.length}</SectionLabel>
-              <span className="text-xs text-zinc-400 font-mono">refreshed just now</span>
+          {/* Center+right: autopilot queue + timeline */}
+          <div className="lg:col-span-2 space-y-6">
+            <div>
+              <div className="flex items-center justify-between">
+                <SectionLabel>Autopilot queue · next up</SectionLabel>
+                <span className="text-[11px] text-zinc-400 font-mono inline-flex items-center gap-1.5">
+                  <Radar className="w-3.5 h-3.5" />
+                  live · updates every 30s
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 mt-1">
+                These are the jobs JobPilot will submit on your behalf next. You don’t need to apply — sit back.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                {queue.length === 0 && (
+                  <div className="jp-card rounded-2xl p-5 col-span-full text-sm text-zinc-500">
+                    {plan === "free"
+                      ? "Upgrade to Starter or Pro to put the autopilot in flight. We'll line up matching roles here."
+                      : "Queue is being built — refresh in a minute."}
+                  </div>
+                )}
+                {queue.map((j, i) => (
+                  <QueueCard key={j.id} job={j} index={i} />
+                ))}
+              </div>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4 mt-3">
-              {jobs.map((j, i) => (
-                <JobCard key={j.id} job={j} index={i} onApply={() => apply(j)} plan={plan} />
-              ))}
+
+            <div>
+              <SectionLabel>Submitted by autopilot</SectionLabel>
+              {apps.length === 0 ? (
+                <div className="jp-card rounded-2xl p-5 mt-3 text-sm text-zinc-500" data-testid="empty-applications">
+                  No applications yet. {plan === "free"
+                    ? "Upgrade to put the autopilot in flight."
+                    : "Your autopilot will submit applications steadily — first one usually within a minute or two."}
+                </div>
+              ) : (
+                <div className="mt-3 jp-card rounded-2xl divide-y divide-zinc-100 overflow-hidden">
+                  {apps.map((a) => (
+                    <div
+                      key={a.id}
+                      className="px-4 sm:px-5 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-sm"
+                      data-testid={`app-row-${a.id}`}
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span className="font-semibold text-zinc-900 truncate">{a.company}</span>
+                        <span className="text-zinc-400 hidden sm:inline">·</span>
+                        <span className="text-zinc-600 truncate">{a.role}</span>
+                        {a.submitted_by === "autopilot" && (
+                          <span className="text-[10px] uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-zinc-900 text-white font-semibold shrink-0">auto</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-zinc-400 font-mono pl-6 sm:pl-0">
+                        <span>{a.platform}</span>
+                        <span>{new Date(a.submitted_at).toLocaleDateString()} · {new Date(a.submitted_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Application history */}
-        {apps.length > 0 && (
-          <div className="mt-12">
-            <SectionLabel>Application timeline</SectionLabel>
-            <div className="mt-3 jp-card rounded-2xl divide-y divide-zinc-100 overflow-hidden">
-              {apps.map((a) => (
-                <div key={a.id} className="px-4 sm:px-5 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-sm" data-testid={`app-row-${a.id}`}>
-                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span className="font-semibold text-zinc-900 truncate">{a.company}</span>
-                    <span className="text-zinc-400 hidden sm:inline">·</span>
-                    <span className="text-zinc-600 truncate">{a.role}</span>
-                  </div>
-                  <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-zinc-400 font-mono pl-6 sm:pl-0">
-                    <span>{a.platform}</span>
-                    <span>{new Date(a.submitted_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))}
+function AutopilotHero({ profile, status, plan, remaining }) {
+  const active = status?.active;
+  const lastApp = status?.last_application;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="jp-card rounded-3xl p-6 sm:p-8 relative overflow-hidden"
+      data-testid="autopilot-hero"
+    >
+      <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-gradient-to-br from-indigo-200/40 via-pink-100/30 to-emerald-100/30 blur-3xl pointer-events-none" />
+      <div className="flex items-start justify-between gap-4 flex-col sm:flex-row relative">
+        <div className="min-w-0">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-zinc-400 font-semibold inline-flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"}`} />
+            {active ? "Autopilot in flight" : "Autopilot paused"}
+          </span>
+          <h1 className="font-display text-3xl sm:text-5xl tracking-[-0.03em] text-zinc-900 font-medium mt-2">
+            Hi, {(profile.full_name || "there").split(" ")[0]}.
+          </h1>
+          <p className="text-sm sm:text-base text-zinc-600 mt-2 max-w-xl">
+            {active
+              ? <>Your pilot is quietly applying to high-match roles on your behalf. <strong>{remaining}</strong> applications left this month.</>
+              : plan === "free"
+                ? "You're on the Free plan. Upgrade to put the autopilot in flight — we'll apply on your behalf."
+                : "You've hit your monthly cap. Your quota resets at the start of next month."}
+          </p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {lastApp && (
+            <div className="text-right">
+              <div className="text-[11px] uppercase tracking-[0.16em] text-zinc-400 font-semibold">Last submitted</div>
+              <div className="text-sm font-medium text-zinc-900">{lastApp.company} · {lastApp.role}</div>
+              <div className="text-[11px] text-zinc-400 font-mono inline-flex items-center gap-1">
+                <Clock className="w-3 h-3" /> {timeAgo(lastApp.submitted_at)}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function timeAgo(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const diff = (Date.now() - d.getTime()) / 1000;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function CreditsCard({ credits }) {
+  const total = credits?.total ?? 3;
+  const remaining = credits?.remaining ?? 3;
+  return (
+    <div className="jp-card rounded-2xl p-4 sm:p-5" data-testid="ai-credits-card">
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] sm:text-xs uppercase tracking-[0.18em] text-zinc-400 font-semibold">AI Credits</div>
+        <Zap className="w-3.5 h-3.5 text-amber-500" />
+      </div>
+      <div className="mt-2 flex items-center gap-1.5" aria-label={`${remaining} of ${total} AI credits remaining`}>
+        {Array.from({ length: total }).map((_, i) => {
+          const filled = i < remaining;
+          return (
+            <div
+              key={i}
+              className={`relative w-7 h-9 rounded-md transition-colors ${
+                filled
+                  ? "bg-gradient-to-b from-amber-300 to-amber-500 shadow-[inset_0_-2px_0_rgba(0,0,0,0.08)]"
+                  : "bg-zinc-100 border border-dashed border-zinc-200"
+              }`}
+              data-testid={`credit-crest-${i}-${filled ? "on" : "off"}`}
+              title={filled ? "Available" : "Used"}
+            >
+              <div className={`absolute inset-0 flex items-center justify-center ${filled ? "text-white" : "text-zinc-300"}`}>
+                <Zap className="w-3 h-3" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2.5 text-[11px] text-zinc-500">
+        <span className="font-semibold text-zinc-900">{remaining}</span> of {total} left · resets monthly
       </div>
     </div>
   );
@@ -205,18 +397,29 @@ function SectionLabel({ children }) {
   return <div className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold">{children}</div>;
 }
 
-function KPI({ label, value, testid }) {
+function KPI({ icon: Icon, label, value, sub, testid }) {
   return (
-    <div className="jp-card rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-3.5 min-w-0" data-testid={testid}>
-      <div className="text-[10px] sm:text-xs uppercase tracking-[0.16em] text-zinc-400 font-semibold truncate">{label}</div>
-      <div className="font-display text-lg sm:text-2xl mt-0.5 font-medium">{value}</div>
+    <div className="jp-card rounded-2xl p-4 sm:p-5" data-testid={testid}>
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] sm:text-xs uppercase tracking-[0.18em] text-zinc-400 font-semibold">{label}</div>
+        <Icon className="w-3.5 h-3.5 text-zinc-400" />
+      </div>
+      <div className="font-display text-2xl sm:text-3xl mt-1.5 font-medium tracking-tight">{value}</div>
+      {sub && <div className="text-[11px] text-zinc-500 mt-0.5">{sub}</div>}
     </div>
   );
 }
 
-function AITool({ icon: Icon, title, desc, busy, onRun, testid }) {
+function AITool({ icon: Icon, title, desc, busy, disabled, onRun, testid }) {
   return (
-    <button onClick={onRun} className="w-full text-left jp-card rounded-2xl p-4 hover:border-zinc-300 transition-all group" data-testid={testid}>
+    <button
+      onClick={onRun}
+      disabled={busy || disabled}
+      className={`w-full text-left jp-card rounded-2xl p-4 transition-all group ${
+        disabled ? "opacity-50 cursor-not-allowed" : "hover:border-zinc-300"
+      }`}
+      data-testid={testid}
+    >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center">
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}
@@ -231,33 +434,32 @@ function AITool({ icon: Icon, title, desc, busy, onRun, testid }) {
   );
 }
 
-function JobCard({ job, index, onApply, plan }) {
+function QueueCard({ job, index }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.4 }}
-      whileHover={{ y: -3 }}
-      className="jp-card rounded-2xl p-5"
-      data-testid={`job-card-${job.id}`}
+      transition={{ delay: index * 0.04, duration: 0.35 }}
+      className="jp-card rounded-2xl p-4 sm:p-5"
+      data-testid={`queue-card-${job.id}`}
     >
       <div className="flex items-center justify-between mb-2">
-        <div className="text-xs uppercase tracking-[0.18em] text-zinc-400 font-semibold">{job.platform}</div>
-        <div className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono">{Math.round(job.match_score * 100)}% match</div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-400 font-semibold">{job.platform}</div>
+        <div className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono">
+          {Math.round((job.match_score || 0.7) * 100)}% match
+        </div>
       </div>
-      <h3 className="font-display text-xl text-zinc-900 leading-tight tracking-[-0.02em]">{job.role}</h3>
+      <h3 className="font-display text-lg sm:text-xl text-zinc-900 leading-tight tracking-[-0.02em]">{job.role}</h3>
       <div className="mt-1 text-sm text-zinc-600 font-medium">{job.company}</div>
-      <div className="mt-1.5 text-xs text-zinc-400">{job.location} · {job.salary}</div>
+      <div className="mt-1 text-xs text-zinc-400">{job.location} · {job.salary}</div>
       <div className="mt-3 flex flex-wrap gap-1.5">
-        {job.tags?.slice(0, 3).map((t) => (
+        {(job.tags || []).slice(0, 3).map((t) => (
           <span key={t} className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">{t}</span>
         ))}
       </div>
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-[11px] text-zinc-400 font-mono">{job.posted_days_ago === 0 ? "today" : `${job.posted_days_ago}d ago`}</span>
-        <button onClick={onApply} className={`text-xs px-3 py-1.5 rounded-full font-medium ${plan === "free" ? "bg-zinc-200 text-zinc-500" : "jp-btn-primary"}`} data-testid={`apply-${job.id}`}>
-          {plan === "free" ? "Locked · Upgrade" : "Apply now"}
-        </button>
+      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-zinc-500">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+        Queued · autopilot will submit soon
       </div>
     </motion.div>
   );

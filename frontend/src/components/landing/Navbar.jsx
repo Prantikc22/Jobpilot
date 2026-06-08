@@ -41,7 +41,6 @@ export default function Navbar() {
           <a href="#story" className="jp-link" data-testid="nav-story">{t("nav.story")}</a>
           <a href="#features" className="jp-link" data-testid="nav-features">{t("nav.features")}</a>
           <a href="#pricing" className="jp-link" data-testid="nav-pricing">{t("nav.pricing")}</a>
-          <a href="#activity" className="jp-link" data-testid="nav-activity">{t("nav.live")}</a>
         </nav>
 
         <div className="flex items-center gap-1">

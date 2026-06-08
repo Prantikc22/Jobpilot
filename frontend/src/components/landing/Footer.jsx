@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Plane } from "lucide-react";
 
 export default function Footer() {
@@ -18,15 +19,42 @@ export default function Footer() {
           </p>
         </div>
         {[
-          { h: "Product", l: ["Features", "Pricing", "Live Activity", "Demo"] },
-          { h: "Company", l: ["About", "Careers", "Blog", "Contact"] },
-          { h: "Legal", l: ["Terms", "Privacy", "Security", "Refunds"] },
+          {
+            h: "Product",
+            l: [
+              { label: "Features", to: "/#features" },
+              { label: "Pricing", to: "/#pricing" },
+              { label: "Dashboard", to: "/dashboard" },
+            ],
+          },
+          {
+            h: "Company",
+            l: [
+              { label: "About", to: "/about-us" },
+              { label: "Contact", to: "/contact-us" },
+            ],
+          },
+          {
+            h: "Legal",
+            l: [
+              { label: "Terms of Service", to: "/terms" },
+              { label: "Privacy Policy", to: "/privacy" },
+              { label: "Refund Policy", to: "/refund-policy" },
+              { label: "Shipping Policy", to: "/shipping" },
+            ],
+          },
         ].map((col) => (
           <div key={col.h}>
             <div className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold">{col.h}</div>
             <ul className="mt-4 space-y-2.5 text-sm text-zinc-600">
               {col.l.map((i) => (
-                <li key={i}><a href="#" className="jp-link">{i}</a></li>
+                <li key={i.label}>
+                  {i.to.startsWith("/#") ? (
+                    <a href={i.to.replace("/", "")} className="jp-link">{i.label}</a>
+                  ) : (
+                    <Link to={i.to} className="jp-link">{i.label}</Link>
+                  )}
+                </li>
               ))}
             </ul>
           </div>

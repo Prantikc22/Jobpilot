@@ -18,7 +18,7 @@ from db import get_db, close as close_db
 from services.supabase_service import ensure_bucket
 from routes.users import router as users_router
 from routes.resumes import router as resumes_router
-from routes.jobs import router as jobs_router
+from routes.jobs import router as jobs_router, autopilot_tick
 from routes.payments import router as payments_router
 from routes.ai import router as ai_router
 from routes.activity import router as activity_router
@@ -81,8 +81,26 @@ async def on_startup():
         ensure_bucket()
     except Exception as e:
         logger.warning(f"Bucket ensure failed: {e}")
+    # Background autopilot loop
+    import asyncio
+
+    async def _autopilot_loop():
+        await asyncio.sleep(15)  # let services warm up
+        while True:
+            try:
+                res = await autopilot_tick(get_db())
+                if res.get("submitted"):
+                    logger.info(f"[autopilot] submitted={res['submitted']} at={res['at']}")
+            except Exception as e:
+                logger.warning(f"[autopilot] tick failed: {e}")
+            await asyncio.sleep(60)
+
+    app.state.autopilot_task = asyncio.create_task(_autopilot_loop())
 
 
 @app.on_event("shutdown")
 async def on_shutdown():
+    task = getattr(app.state, "autopilot_task", None)
+    if task:
+        task.cancel()
     close_db()

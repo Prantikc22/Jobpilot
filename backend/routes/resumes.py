@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from auth_deps import get_current_user
 from db import get_db
 from services.supabase_service import upload_resume, get_signed_url
-from services.llm_service import chat_json
+from services.openrouter_service import chat_json, OpenRouterBusy
+from services.ai_credits import consume_credit, refund_credit
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
@@ -82,9 +83,17 @@ async def parse_resume(user=Depends(get_current_user), db=Depends(get_db)):
         "education (array of {school, degree, year}), suggested_roles (array of strings, up to 5)."
     )
     text = doc["resume_text"][:8000]
+    await consume_credit(db, user["id"])
     try:
         parsed = await chat_json(system, f"RESUME:\n{text}")
+    except OpenRouterBusy:
+        await refund_credit(db, user["id"])
+        raise HTTPException(
+            status_code=503,
+            detail="Our AI is briefly overloaded. We didn't charge a credit — please retry in 30–60 seconds.",
+        )
     except Exception as e:
+        await refund_credit(db, user["id"])
         raise HTTPException(status_code=500, detail=f"AI parse failed: {e}")
 
     await db.users.update_one(

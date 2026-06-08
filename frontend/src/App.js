@@ -14,6 +14,12 @@ const PricingCheckout = lazy(() => import("@/pages/PricingCheckout"));
 const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const SharePage = lazy(() => import("@/pages/SharePage"));
+const RefundPolicy = lazy(() => import("@/pages/legal/RefundPolicy"));
+const Terms = lazy(() => import("@/pages/legal/Terms"));
+const Privacy = lazy(() => import("@/pages/legal/Privacy"));
+const Shipping = lazy(() => import("@/pages/legal/Shipping"));
+const Contact = lazy(() => import("@/pages/legal/Contact"));
+const About = lazy(() => import("@/pages/legal/About"));
 
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -39,6 +45,12 @@ function App() {
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/share/:token" element={<SharePage />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/shipping" element={<Shipping />} />
+              <Route path="/contact-us" element={<Contact />} />
+              <Route path="/about-us" element={<About />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
