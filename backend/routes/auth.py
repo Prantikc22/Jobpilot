@@ -18,6 +18,11 @@ class ConfirmBody(BaseModel):
     email: EmailStr
 
 
+class ResetPasswordBody(BaseModel):
+    email: EmailStr
+    new_password: str
+
+
 @router.post("/signup")
 async def signup(body: SignupBody):
     """
@@ -76,6 +81,40 @@ async def confirm_email(body: ConfirmBody):
         uid = getattr(target, "id", None) or (target.get("id") if isinstance(target, dict) else None)
         client.auth.admin.update_user_by_id(uid, {"email_confirm": True})
         return {"ok": True, "confirmed": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/reset-password")
+async def reset_password(body: ResetPasswordBody):
+    """
+    Self-service password reset for MVP — looks up the user by email via the
+    admin API and sets a new password + email_confirm=True so the user can sign
+    in immediately. This unblocks users who forgot their password and don't
+    have email-link delivery configured.
+    """
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    client = get_admin_client()
+    try:
+        resp = client.auth.admin.list_users()
+        users = getattr(resp, "users", None) or (resp if isinstance(resp, list) else [])
+        target = None
+        for u in users:
+            ue = getattr(u, "email", None) or (u.get("email") if isinstance(u, dict) else None)
+            if ue and ue.lower() == body.email.lower():
+                target = u
+                break
+        if not target:
+            raise HTTPException(status_code=404, detail="No account found with that email")
+        uid = getattr(target, "id", None) or (target.get("id") if isinstance(target, dict) else None)
+        client.auth.admin.update_user_by_id(
+            uid,
+            {"password": body.new_password, "email_confirm": True},
+        )
+        return {"ok": True, "reset": True}
     except HTTPException:
         raise
     except Exception as e:

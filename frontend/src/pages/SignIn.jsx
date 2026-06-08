@@ -34,17 +34,26 @@ export default function SignIn() {
   };
 
   const fixAccount = async () => {
-    if (!email) {
-      toast.error("Enter your email first");
+    if (!email || !pwd) {
+      toast.error("Type your email and the password you want to use");
       return;
     }
     setFixing(true);
     try {
+      // First try just confirming the email (if signup was unconfirmed)
       await axios.post(`${BACKEND}/api/auth/confirm-email`, { email });
-      toast.success("Email confirmed — try signing in now");
+      // Then reset the password to whatever they typed — this also re-confirms
+      await axios.post(`${BACKEND}/api/auth/reset-password`, { email, new_password: pwd });
+      toast.success("Account recovered — signing you in…");
+      const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       setShowFix(false);
+      nav("/dashboard");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Couldn't confirm — check the email is correct");
+      toast.error(err.response?.data?.detail || "Couldn't recover — check the email is correct");
     } finally {
       setFixing(false);
     }
@@ -77,15 +86,15 @@ export default function SignIn() {
             <div className="flex-1">
               <div className="text-sm font-semibold text-amber-900">Login not working?</div>
               <p className="text-xs text-amber-800 mt-0.5">
-                If you signed up earlier and never confirmed your email, click below — we'll confirm it for you instantly.
+                If you forgot your password or never confirmed your email, type a fresh password above and click below — we’ll reset your account to that password and sign you in.
               </p>
               <button
                 onClick={fixAccount}
-                disabled={fixing || !email}
+                disabled={fixing || !email || !pwd}
                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-900 text-white hover:bg-amber-800 disabled:opacity-50"
                 data-testid="signin-fix-btn"
               >
-                {fixing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <>Confirm my email & retry</>}
+                {fixing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <>Recover & sign in</>}
               </button>
             </div>
           </div>
