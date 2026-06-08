@@ -4,7 +4,7 @@ export default function Privacy() {
   return (
     <LegalShell title="Privacy Policy" updated="July 2025" testid="page-privacy">
       <P>
-        Your privacy is fundamental to JobPilot. This policy explains what we collect, how we use it, and the controls you have.
+        Your privacy is fundamental to ApplyAgent. This policy explains what we collect, how we use it, and the controls you have.
       </P>
 
       <H2>1. Data we collect</H2>
@@ -51,13 +51,13 @@ export default function Privacy() {
       </P>
 
       <H2>7. Children</H2>
-      <P>JobPilot is not directed at users under 18 and we do not knowingly collect data from minors.</P>
+      <P>ApplyAgent is not directed at users under 18 and we do not knowingly collect data from minors.</P>
 
       <H2>8. Changes</H2>
       <P>If we make material changes we will notify you via email and update this page.</P>
 
       <H2>9. Contact</H2>
-      <P>Email <a href="mailto:privacy@jobpilot.ai" className="underline">privacy@jobpilot.ai</a> for any privacy question or data request.</P>
+      <P>Email <a href="mailto:privacy@getapplyagent.com" className="underline">privacy@getapplyagent.com</a> for any privacy question or data request.</P>
     </LegalShell>
   );
 }

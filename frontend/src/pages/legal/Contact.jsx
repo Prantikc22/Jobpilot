@@ -9,22 +9,22 @@ export default function Contact() {
 
       <H2>Support</H2>
       <P>
-        For product help, billing, or refunds: <a href="mailto:support@jobpilot.ai" className="underline">support@jobpilot.ai</a>
+        For product help, billing, or refunds: <a href="mailto:support@getapplyagent.com" className="underline">support@getapplyagent.com</a>
       </P>
 
       <H2>Privacy & data</H2>
       <P>
-        For data access, deletion, or any privacy question: <a href="mailto:privacy@jobpilot.ai" className="underline">privacy@jobpilot.ai</a>
+        For data access, deletion, or any privacy question: <a href="mailto:privacy@getapplyagent.com" className="underline">privacy@getapplyagent.com</a>
       </P>
 
       <H2>Press & partnerships</H2>
       <P>
-        Reach the founders at <a href="mailto:hello@jobpilot.ai" className="underline">hello@jobpilot.ai</a>.
+        Reach the founders at <a href="mailto:hello@getapplyagent.com" className="underline">hello@getapplyagent.com</a>.
       </P>
 
       <H2>Business address</H2>
       <P>
-        JobPilot AI<br />
+        ApplyAgent<br />
         Indiranagar, Bengaluru, Karnataka 560038<br />
         India
       </P>

@@ -2,14 +2,14 @@ import { LegalShell, H2, P } from "./_LegalShell";
 
 export default function About() {
   return (
-    <LegalShell title="About JobPilot" updated="July 2025" testid="page-about">
+    <LegalShell title="About ApplyAgent" updated="July 2025" testid="page-about">
       <P>
-        JobPilot is the autonomous job-search agent. Upload your resume once, set your preferences, and our AI quietly applies on your behalf to roles that actually fit — while you keep doing whatever matters more.
+        ApplyAgent is the autonomous job-search agent. Upload your resume once, set your preferences, and our AI quietly applies on your behalf to roles that actually fit — while you keep doing whatever matters more.
       </P>
 
       <H2>Our mission</H2>
       <P>
-        Job hunting is exhausting busywork. We believe nobody should have to retype their experience into 200 different forms. JobPilot’s mission is to delete that friction entirely — so that humans can spend their time interviewing, learning, and choosing, instead of clicking “Apply”.
+        Job hunting is exhausting busywork. We believe nobody should have to retype their experience into 200 different forms. ApplyAgent’s mission is to delete that friction entirely — so that humans can spend their time interviewing, learning, and choosing, instead of clicking “Apply”.
       </P>
 
       <H2>How it works</H2>

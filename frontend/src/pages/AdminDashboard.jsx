@@ -92,7 +92,7 @@ export default function AdminDashboard() {
                 <Plane className="w-4 h-4 -rotate-12 text-zinc-900" />
               </div>
             </div>
-            <span className="font-display font-bold tracking-tight">JobPilot</span>
+            <span className="font-display font-bold tracking-tight">ApplyAgent</span>
             <span className="ml-3 text-xs uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-zinc-900 text-white font-semibold">Admin</span>
           </Link>
           <button onClick={() => { localStorage.removeItem("jp_admin_token"); nav("/admin/login"); }} className="text-sm text-zinc-500 hover:text-zinc-900 inline-flex items-center gap-1.5" data-testid="admin-signout">

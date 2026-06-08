@@ -41,7 +41,7 @@ export default function PricingCheckout() {
         key: order.key_id,
         amount: order.amount,
         currency: order.currency,
-        name: "JobPilot",
+        name: "ApplyAgent",
         description: `${planId.toUpperCase()} subscription`,
         order_id: order.order_id,
         prefill: { email: user?.email },
@@ -90,7 +90,7 @@ export default function PricingCheckout() {
               <Plane className="w-4 h-4 -rotate-12 text-zinc-900" />
             </div>
           </div>
-          <span className="font-display font-bold tracking-tight">JobPilot</span>
+          <span className="font-display font-bold tracking-tight">ApplyAgent</span>
         </div>
         <h1 className="font-display text-4xl md:text-5xl tracking-[-0.03em] text-zinc-900 font-medium">Pick your pilot tier</h1>
         <p className="text-zinc-500 mt-2">You can switch or cancel anytime.</p>

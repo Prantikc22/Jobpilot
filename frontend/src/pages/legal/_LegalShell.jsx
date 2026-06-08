@@ -12,7 +12,7 @@ export function LegalShell({ title, updated, children, testid }) {
                 <Plane className="w-4 h-4 -rotate-12 text-zinc-900" />
               </div>
             </div>
-            <span className="font-display font-bold text-[17px] tracking-tight">JobPilot</span>
+            <span className="font-display font-bold text-[17px] tracking-tight">ApplyAgent</span>
           </Link>
           <Link to="/" className="text-sm text-zinc-500 hover:text-zinc-900 inline-flex items-center gap-1.5">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -29,7 +29,7 @@ export function LegalShell({ title, updated, children, testid }) {
           {children}
         </article>
         <div className="mt-16 pt-6 border-t border-zinc-100 text-xs text-zinc-400">
-          Questions? Email <a href="mailto:support@jobpilot.ai" className="underline hover:text-zinc-700">support@jobpilot.ai</a>.
+          Questions? Email <a href="mailto:support@getapplyagent.com" className="underline hover:text-zinc-700">support@getapplyagent.com</a>.
         </div>
       </main>
     </div>

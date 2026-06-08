@@ -4,24 +4,24 @@ export default function Terms() {
   return (
     <LegalShell title="Terms of Service" updated="July 2025" testid="page-terms">
       <P>
-        These Terms govern your use of JobPilot (the “Service”). By creating an account or using the Service you agree to these Terms. If you do not agree, please do not use the Service.
+        These Terms govern your use of ApplyAgent (the “Service”). By creating an account or using the Service you agree to these Terms. If you do not agree, please do not use the Service.
       </P>
 
       <H2>1. The service</H2>
       <P>
-        JobPilot is an autonomous job-search agent. After you upload your resume and confirm your preferences, our software identifies matching openings and may submit applications on your behalf, subject to the limits of your subscription plan.
+        ApplyAgent is an autonomous job-search agent. After you upload your resume and confirm your preferences, our software identifies matching openings and may submit applications on your behalf, subject to the limits of your subscription plan.
       </P>
 
       <H2>2. Eligibility</H2>
       <P>
-        You must be at least 18 years old and legally able to enter into a binding contract in your country of residence to use JobPilot.
+        You must be at least 18 years old and legally able to enter into a binding contract in your country of residence to use ApplyAgent.
       </P>
 
       <H2>3. Your account</H2>
       <UL>
         <li>You are responsible for keeping your credentials secure and for all activity under your account.</li>
         <li>The information you provide (resume, contact details, preferences, optional job-search email password) must be accurate and your own.</li>
-        <li>You authorise JobPilot to use that information to submit job applications on your behalf.</li>
+        <li>You authorise ApplyAgent to use that information to submit job applications on your behalf.</li>
       </UL>
 
       <H2>4. Subscription, billing & cancellation</H2>
@@ -39,17 +39,17 @@ export default function Terms() {
 
       <H2>6. AI-generated content</H2>
       <P>
-        The Service uses LLMs to draft resumes, cover letters, and recommendations. You are responsible for reviewing all AI-generated content before it is sent on your behalf where applicable. JobPilot makes no warranty as to interview outcomes or job offers.
+        The Service uses LLMs to draft resumes, cover letters, and recommendations. You are responsible for reviewing all AI-generated content before it is sent on your behalf where applicable. ApplyAgent makes no warranty as to interview outcomes or job offers.
       </P>
 
       <H2>7. Intellectual property</H2>
       <P>
-        The Service, including all software, design, and branding, is owned by JobPilot. You retain ownership of your resume and personal data.
+        The Service, including all software, design, and branding, is owned by ApplyAgent. You retain ownership of your resume and personal data.
       </P>
 
       <H2>8. Disclaimer & limitation of liability</H2>
       <P>
-        The Service is provided “as is” without warranties of any kind. To the maximum extent permitted by law, JobPilot’s aggregate liability shall not exceed the amount you paid us in the 3 months preceding the claim.
+        The Service is provided “as is” without warranties of any kind. To the maximum extent permitted by law, ApplyAgent’s aggregate liability shall not exceed the amount you paid us in the 3 months preceding the claim.
       </P>
 
       <H2>9. Governing law</H2>
@@ -64,7 +64,7 @@ export default function Terms() {
 
       <H2>11. Contact</H2>
       <P>
-        Questions? Write to <a href="mailto:support@jobpilot.ai" className="underline">support@jobpilot.ai</a>.
+        Questions? Write to <a href="mailto:support@getapplyagent.com" className="underline">support@getapplyagent.com</a>.
       </P>
     </LegalShell>
   );

@@ -47,7 +47,7 @@ export default function SignUp() {
       }
 
       await applyReferralIfAny();
-      toast.success("Welcome to JobPilot ✈️");
+      toast.success("Welcome to ApplyAgent ✈️");
       nav("/onboarding");
     } catch (err) {
       const detail = err.response?.data?.detail || "Sign-up failed";

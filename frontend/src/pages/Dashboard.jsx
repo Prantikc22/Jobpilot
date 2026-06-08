@@ -73,7 +73,7 @@ export default function Dashboard() {
                 <Plane className="w-3.5 h-3.5 sm:w-4 sm:h-4 -rotate-12 text-zinc-900" />
               </div>
             </div>
-            <span className="font-display font-bold tracking-tight text-sm sm:text-base">JobPilot</span>
+            <span className="font-display font-bold tracking-tight text-sm sm:text-base">ApplyAgent</span>
             <span className="ml-2 sm:ml-3 text-[10px] sm:text-xs uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 font-semibold" data-testid="dashboard-plan-badge">{plan}</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -191,7 +191,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <p className="text-xs text-zinc-500 mt-1">
-                These are the jobs JobPilot will submit on your behalf next. You don’t need to apply — sit back.
+                These are the jobs ApplyAgent will submit on your behalf next. You don’t need to apply — sit back.
               </p>
 
               <div className="grid sm:grid-cols-2 gap-3 mt-3">

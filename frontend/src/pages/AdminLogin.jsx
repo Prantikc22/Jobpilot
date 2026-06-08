@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Field } from "./SignIn";
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState("admin@jobpilot.ai");
+  const [email, setEmail] = useState("admin@getapplyagent.com");
   const [pwd, setPwd] = useState("");
   const [busy, setBusy] = useState(false);
   const nav = useNavigate();
@@ -44,7 +44,7 @@ export default function AdminLogin() {
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Sign in <ArrowRight className="w-4 h-4" /></>}
           </button>
         </form>
-        <p className="mt-4 text-xs text-white/40 text-center">JobPilot Admin v1 · all access logged</p>
+        <p className="mt-4 text-xs text-white/40 text-center">ApplyAgent Admin v1 · all access logged</p>
       </motion.div>
     </div>
   );

@@ -57,7 +57,7 @@
   "stats": {
     "label": "By the numbers",
     "title": "Receipts, not promises.",
-    "sub": "Every number below is the sum of real applications, real interviews, and real offers from JobPilot users.",
+    "sub": "Every number below is the sum of real applications, real interviews, and real offers from ApplyAgent users.",
     "apps": "Applications Submitted",
     "seekers": "Job Seekers Piloting",
     "interviews": "Interview Requests",
@@ -81,7 +81,7 @@
     "title1": "Your dream job is",
     "title2": "closer",
     "title3": "than you think.",
-    "sub": "Stop applying. Start interviewing. Upload your resume once and let JobPilot apply on your behalf — only to roles that actually fit you.",
+    "sub": "Stop applying. Start interviewing. Upload your resume once and let ApplyAgent apply on your behalf — only to roles that actually fit you.",
     "primary": "Start Applying Today",
     "secondary": "I already have an account",
     "footnote": "No card required for free tier · Cancel anytime"

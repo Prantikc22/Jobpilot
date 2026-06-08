@@ -34,8 +34,8 @@ export default function SharePage() {
           }
           m.setAttribute("content", c);
         };
-        const title = `${r.data.first_name}'s JobPilot dispatch`;
-        const desc = `${r.data.applications_count} applications · ${r.data.interviews_count} interviews · ${r.data.offers_count} offers. While I sleep — JobPilot applies.`;
+        const title = `${r.data.first_name}'s ApplyAgent dispatch`;
+        const desc = `${r.data.applications_count} applications · ${r.data.interviews_count} interviews · ${r.data.offers_count} offers. While I sleep — ApplyAgent applies.`;
         document.title = title;
         setMeta("og:title", title);
         setMeta("og:description", desc);
@@ -71,7 +71,7 @@ export default function SharePage() {
             <Plane className="w-4 h-4 -rotate-12 text-zinc-900" />
           </div>
         </div>
-        <span className="font-display font-bold tracking-tight">JobPilot</span>
+        <span className="font-display font-bold tracking-tight">ApplyAgent</span>
       </Link>
 
       <div className="relative max-w-3xl mx-auto pt-24 pb-20 px-6 text-center">
@@ -98,7 +98,7 @@ export default function SharePage() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.25 }}
           src={ogImg}
-          alt="JobPilot dispatch card"
+          alt="ApplyAgent dispatch card"
           className="mt-10 mx-auto rounded-3xl border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] max-w-full"
           data-testid="share-og-image"
         />

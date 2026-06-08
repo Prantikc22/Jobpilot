@@ -34,7 +34,7 @@ export default function Navbar() {
               <Plane className="w-4 h-4 -rotate-12 text-zinc-900" />
             </div>
           </div>
-          <span className="font-display font-bold text-[17px] tracking-tight">JobPilot</span>
+          <span className="font-display font-bold text-[17px] tracking-tight">ApplyAgent</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 text-sm text-zinc-600">

@@ -114,7 +114,7 @@ export default function Onboarding() {
             <Plane className="w-4 h-4 -rotate-12 text-zinc-900" />
           </div>
         </div>
-        <span className="font-display font-bold tracking-tight">JobPilot</span>
+        <span className="font-display font-bold tracking-tight">ApplyAgent</span>
       </a>
 
       <div className="relative max-w-2xl mx-auto pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6">

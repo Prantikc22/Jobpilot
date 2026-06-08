@@ -123,7 +123,7 @@ export function AuthShell({ title, subtitle, children, testid }) {
             <Plane className="w-4 h-4 -rotate-12 text-zinc-900" />
           </div>
         </div>
-        <span className="font-display font-bold tracking-tight">JobPilot</span>
+        <span className="font-display font-bold tracking-tight">ApplyAgent</span>
       </Link>
 
       <div className="relative max-w-md mx-auto pt-28 pb-20 px-6">

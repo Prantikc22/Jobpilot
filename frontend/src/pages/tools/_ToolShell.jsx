@@ -34,7 +34,7 @@ export function ToolShell({ title, subtitle, icon: Icon, accent = "from-indigo-5
                 <Plane className="w-3.5 h-3.5 -rotate-12 text-zinc-900" />
               </div>
             </div>
-            <span className="font-display font-bold tracking-tight text-sm">JobPilot</span>
+            <span className="font-display font-bold tracking-tight text-sm">ApplyAgent</span>
           </Link>
           <Link to="/dashboard" className="text-xs sm:text-sm text-zinc-500 hover:text-zinc-900 inline-flex items-center gap-1.5">
             <ArrowLeft className="w-4 h-4" /> Back to dashboard

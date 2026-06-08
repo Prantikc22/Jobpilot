@@ -37,8 +37,8 @@ export default function ShareWidget({ profile }) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "My JobPilot dispatch",
-          text: "While I sleep — JobPilot applies.",
+          title: "My ApplyAgent dispatch",
+          text: "While I sleep — ApplyAgent applies.",
           url: shareUrl,
         });
       } catch {}
@@ -48,7 +48,7 @@ export default function ShareWidget({ profile }) {
   };
 
   const linkedinShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl || "")}`;
-  const tweetText = `My JobPilot is flying ✈️ ${profile?.applications_count || 0} applications, ${profile?.interviews_count || 0} interviews, ${profile?.offers_count || 0} offers — all while I slept.`;
+  const tweetText = `My ApplyAgent is flying ✈️ ${profile?.applications_count || 0} applications, ${profile?.interviews_count || 0} interviews, ${profile?.offers_count || 0} offers — all while I slept.`;
   const twitterShare = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl || "")}`;
 
   return (
