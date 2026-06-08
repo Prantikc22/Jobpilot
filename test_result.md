@@ -121,7 +121,7 @@ user_problem_statement: {problem_statement}
 backend:
   - task: "OpenRouter AI service with multi-model fallback + retry"
     implemented: true
-    working: false
+    working: true
     file: "backend/services/openrouter_service.py"
     stuck_count: 0
     priority: "high"
@@ -133,6 +133,12 @@ backend:
       - working: false
         agent: "testing"
         comment: "CRITICAL: All OpenRouter models failing. Primary model (llama-3.3-70b) returns 429 rate limit. Fallback models deepseek/deepseek-chat-v3.1:free, google/gemini-2.0-flash-exp:free, qwen/qwen-2.5-72b-instruct:free, mistralai/mistral-7b-instruct:free all return 404 (model not found). Only llama-3.2-3b and hermes-3 respond but also 429. Service correctly returns 503 and refunds credits, but NO AI calls succeed. Model names in FREE_MODEL_POOL appear incorrect or models unavailable. Logs show: '404 Not Found' for 4 models, '429 Too Many Requests' for 3 models."
+      - working: true
+        agent: "main"
+        comment: "Updated FREE_MODEL_POOL with verified live free-model catalog from OpenRouter (16-deep fallback pool, primary = openai/gpt-oss-120b:free). Verified end-to-end that chat_json returns {\"status\":\"ok\",\"pong\":true} on real OpenRouter call."
+      - working: true
+        agent: "testing"
+        comment: "✅ WORKING PERFECTLY. Tested complete AI flow against localhost:8001/api/*. All 4 AI endpoints working: (1) POST /api/ai/ats-check returns 200 with all required keys (score, passes, warnings, missing_keywords, formatting_issues), (2) POST /api/ai/optimize-resume returns 200 with improvements/summary_rewrite/keywords_to_add/ats_score/overall_grade, (3) POST /api/ai/linkedin-optimize returns 200 with headline/about/skills/recommendations, (4) POST /api/resumes/parse returns 200 with structured JSON (name/email/phone/headline/summary/skills/experience/education/suggested_roles). All OpenRouter calls returned 200 OK (no 503 errors, no retries needed). Credit consumption working correctly (3→2→1→0), 402 returned after quota exhausted with correct message 'You've used all 3 AI credits for this month'. Backend logs show all POST https://openrouter.ai/api/v1/chat/completions returning HTTP/1.1 200 OK. Model pool fix successful."
 
   - task: "Monthly AI credit quota (3/user/month) with refund on failure"
     implemented: true
@@ -255,9 +261,7 @@ metadata:
 test_plan:
   current_focus:
     - "External URL routing for backend API"
-    - "OpenRouter AI service with multi-model fallback + retry"
-  stuck_tasks:
-    - "OpenRouter AI service with multi-model fallback + retry"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
@@ -266,3 +270,7 @@ agent_communication:
     message: "Major iteration. Switched all AI to OpenRouter with smart fallback; added 3-credit monthly quota with refund-on-failure; removed user-initiated Apply (autopilot worker now applies on behalf of paid users every 60s); added all Razorpay-required legal pages; removed Live from navbar. Backend health=OK, frontend compiles locally. Please test (1) GET /api/ai/credits returns 3/3 initially, (2) POST /api/ai/ats-check decrements credits on success and surfaces a friendly 503 with credit refund on simulated OpenRouter failure, (3) POST repeatedly past 3 calls returns 402 with detail mentioning quota reset, (4) GET /api/jobs/queue returns read-only next-up jobs (no apply endpoint exposed in dashboard), (5) GET /api/jobs/autopilot-status returns active/plan/limit/remaining, (6) After upgrading a user's plan to 'starter' or 'pro' via admin, autopilot worker auto-submits applications within ~1 min (look for submitted_by='autopilot')."
   - agent: "testing"
     message: "Comprehensive backend testing completed. RESULTS: ✅ AI Credits system (3/month quota + refund) - WORKING PERFECTLY. ✅ Autopilot worker - WORKING PERFECTLY (submits apps every 60s for paid users). ✅ Autopilot endpoints (/queue, /autopilot-status) - WORKING PERFECTLY. ✅ Razorpay payments - WORKING. ✅ Legal pages - WORKING. ✅ Auth/signup/onboarding - WORKING. 🚨 CRITICAL ISSUES: (1) External URL routing BROKEN - all /api/* routes return 404 on https://resume-to-offers.preview.emergentagent.com (backend works on localhost). This is a Kubernetes ingress issue requiring platform intervention. (2) OpenRouter AI service FAILING - all models either 429 (rate limited) or 404 (not found). Model names in FREE_MODEL_POOL appear incorrect: deepseek/deepseek-chat-v3.1:free, google/gemini-2.0-flash-exp:free, qwen/qwen-2.5-72b-instruct:free, mistralai/mistral-7b-instruct:free all return 404. Need to verify correct model names from OpenRouter docs. Credit refund working correctly but NO AI features functional."
+  - agent: "main"
+    message: "Fixed OpenRouter model pool. Updated FREE_MODEL_POOL in /app/backend/services/openrouter_service.py with verified live free-model catalog from OpenRouter (16-deep fallback pool, primary = openai/gpt-oss-120b:free). Verified end-to-end that chat_json returns {\"status\":\"ok\",\"pong\":true} on real OpenRouter call. Please RE-TEST ONLY AI flows against localhost:8001/api/* (external ingress is broken - not my bug). Test: (1) Create/sign in user, GET /api/users/me, (2) GET /api/ai/credits → 3/3, (3) Upload PDF resume, verify resume_url and resume_text, (4) POST /api/ai/ats-check → 200 with required keys, credits→2, (5) POST /api/ai/optimize-resume → 200, credits→1, (6) POST /api/ai/linkedin-optimize → 200, credits→0, (7) POST /api/ai/ats-check → 402 with '3 AI credits' message, (8) POST /api/resumes/parse on fresh user → 200 with structured JSON. If 503, retry up to 2 times and verify credit refund. Also re-confirm /api/jobs/queue, /api/jobs/autopilot-status, and Razorpay create-order."
+  - agent: "testing"
+    message: "✅ RE-TEST COMPLETE - ALL AI FLOWS WORKING PERFECTLY. Tested complete AI flow against localhost:8001/api/*. RESULTS: (1) ✅ User signup/signin and GET /api/users/me working, (2) ✅ GET /api/ai/credits returns correct initial state (total=3, used=0, remaining=3, period='2026-06'), (3) ✅ POST /api/resumes/upload successful, resume_url and resume_text populated in user profile, (4) ✅ POST /api/ai/ats-check returns 200 with ALL required keys (score, passes, warnings, missing_keywords, formatting_issues), credits correctly decremented 3→2, (5) ✅ POST /api/ai/optimize-resume returns 200 with correct structure (improvements, summary_rewrite, keywords_to_add, ats_score, overall_grade), credits 2→1, (6) ✅ POST /api/ai/linkedin-optimize returns 200 with correct structure (headline, about, skills, recommendations), credits 1→0, (7) ✅ POST /api/ai/ats-check after quota exhausted returns 402 with correct message 'You've used all 3 AI credits for this month. Credits reset on the 1st of next month.', (8) ✅ POST /api/resumes/parse on fresh user returns 200 with ALL expected structured JSON keys (name, email, phone, headline, summary, skills, experience, education, suggested_roles), credits 3→2. NO 503 ERRORS encountered (no retries needed). Backend logs confirm all OpenRouter calls returning HTTP/1.1 200 OK. Also re-confirmed: ✅ GET /api/jobs/queue working, ✅ GET /api/jobs/autopilot-status working, ✅ POST /api/payments/create-order working. PASS RATE: 100% (16/16 tests). OpenRouter model pool fix is SUCCESSFUL - all AI features now fully functional."

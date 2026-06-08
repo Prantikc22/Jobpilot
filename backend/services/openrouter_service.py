@@ -26,18 +26,30 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Primary model (env-configurable) is always tried first, then the rest of the
 # free pool. Duplicates are de-duped while preserving order.
-_DEFAULT_PRIMARY = "meta-llama/llama-3.3-70b-instruct:free"
+# Strictly only `:free`-suffixed models so we never surprise-charge the key.
+# Pool is curated from the live OpenRouter free catalog (23 free models as of
+# the build). We order them so that the larger / higher-quality currently-
+# uncongested models are tried first, and lighter ones absorb spillover.
+_DEFAULT_PRIMARY = "openai/gpt-oss-120b:free"
 PRIMARY_MODEL = os.environ.get("OPENROUTER_MODEL", _DEFAULT_PRIMARY)
 
 FREE_MODEL_POOL = [
     PRIMARY_MODEL,
+    "openai/gpt-oss-120b:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
+    "z-ai/glm-4.5-air:free",
+    "google/gemma-4-31b-it:free",
+    "google/gemma-4-26b-a4b-it:free",
     "meta-llama/llama-3.3-70b-instruct:free",
-    "deepseek/deepseek-chat-v3.1:free",
-    "google/gemini-2.0-flash-exp:free",
-    "qwen/qwen-2.5-72b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "meta-llama/llama-3.2-3b-instruct:free",
+    "qwen/qwen3-next-80b-a3b-instruct:free",
+    "qwen/qwen3-coder:free",
+    "moonshotai/kimi-k2.6:free",
+    "openai/gpt-oss-20b:free",
     "nousresearch/hermes-3-llama-3.1-405b:free",
+    "nvidia/nemotron-nano-9b-v2:free",
+    "meta-llama/llama-3.2-3b-instruct:free",
+    "liquid/lfm-2.5-1.2b-instruct:free",
 ]
 # De-dupe preserving order
 _seen = set()
