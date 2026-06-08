@@ -30,6 +30,28 @@ from routes.auth import router as auth_router
 
 app = FastAPI(title="JobPilot API", version="1.0.0")
 
+# Serve built React frontend in production
+_FRONTEND_BUILD = Path(__file__).parent.parent / "frontend" / "build"
+if _FRONTEND_BUILD.exists():
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+
+    app.mount("/static", StaticFiles(directory=str(_FRONTEND_BUILD / "static")), name="static")
+
+    @app.get("/", include_in_schema=False)
+    async def serve_root():
+        return FileResponse(str(_FRONTEND_BUILD / "index.html"))
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        # Let /api/* pass through to the API router
+        if full_path.startswith("api/"):
+            return {"detail": "Not Found"}
+        file_path = _FRONTEND_BUILD / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(str(file_path))
+        return FileResponse(str(_FRONTEND_BUILD / "index.html"))
+
 api_router = APIRouter(prefix="/api")
 
 

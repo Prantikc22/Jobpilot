@@ -5,3 +5,82 @@ stack = "BEST_EFFORT_FALLBACK"
 
 [nix]
 channel = "stable-25_05"
+packages = ["awsebcli", "c-ares", "cacert", "cargo", "freetype", "glibcLocales", "grpc", "lcms2", "libffi", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "libyaml", "openjpeg", "openssl", "pkg-config", "rustc", "tcl", "tk", "xcodebuild", "zlib"]
+
+[userenv]
+
+[userenv.shared]
+SUPABASE_URL = "https://uywqvvgmtqfxxwggectv.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5d3F2dmdtdHFmeHh3Z2dlY3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NDYxMDgsImV4cCI6MjA5NjIyMjEwOH0.M2t5fM2fk1N-m8CognedP6oYHWYrDB7osR01TNciMvA"
+SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5d3F2dmdtdHFmeHh3Z2dlY3R2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDY0NjEwOCwiZXhwIjoyMDk2MjIyMTA4fQ.BzEjzwy8mPPPOQmiBdXIol_saUmGodYdkHKgNU1-pRc"
+SUPABASE_RESUME_BUCKET = "resumes"
+MONGO_URL = "mongodb://localhost:27017"
+DB_NAME = "test_database"
+CORS_ORIGINS = "*"
+RAZORPAY_KEY_ID = "rzp_test_SyENxR5DvcJ1N6"
+RAZORPAY_KEY_SECRET = "yejviwXWYwntCsKnbAPIFs8u"
+RAZORPAY_WEBHOOK_SECRET = ""
+OPENROUTER_API_KEY = "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"
+OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+ADMIN_EMAIL = "admin@jobpilot.ai"
+ADMIN_PASSWORD = "JobPilot@2026"
+ADMIN_JWT_SECRET = "jobpilot_admin_super_secret_change_in_prod_2026"
+REACT_APP_SUPABASE_URL = "https://uywqvvgmtqfxxwggectv.supabase.co"
+REACT_APP_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5d3F2dmdtdHFmeHh3Z2dlY3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NDYxMDgsImV4cCI6MjA5NjIyMjEwOH0.M2t5fM2fk1N-m8CognedP6oYHWYrDB7osR01TNciMvA"
+REACT_APP_BACKEND_URL = ""
+WDS_SOCKET_PORT = "443"
+ENABLE_HEALTH_CHECK = "false"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Backend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && uvicorn server:app --host localhost --port 8000 --reload"
+waitForPort = 8000
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm install --legacy-peer-deps --no-audit --no-fund && npm install ajv@^8 --legacy-peer-deps --no-audit && PORT=5000 BROWSER=none npx craco start"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+exposeLocalhost = true
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["bash", "-c", "cd backend && uvicorn server:app --host 0.0.0.0 --port 5000"]
+build = ["bash", "-c", "cd frontend && npm install --legacy-peer-deps --no-audit && npm run build"]
