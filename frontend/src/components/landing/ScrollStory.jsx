@@ -208,12 +208,110 @@ function AIScanVisual() {
     { name: "Kubernetes", color: "#8b5cf6" },
     { name: "TypeScript", color: "#0ea5e9" },
     { name: "GraphQL",    color: "#ec4899" },
-    { name: "PostgreSQL", color: "#10b981" },
+    { name: "Postgres",   color: "#10b981" },
     { name: "ML Ops",     color: "#f43f5e" },
   ];
-  const SIZE = 440;
+  const SIZE = 420;
   const CENTER = SIZE / 2;
-  const RING_RADIUS = 170;
+  const RING_R = 165;
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      <div className="relative" style={{ width: SIZE, height: SIZE, flexShrink: 0 }}>
+        {/* Static halo behind */}
+        <div
+          className="absolute rounded-full bg-gradient-to-br from-blue-100/50 via-violet-100/40 to-rose-100/30"
+          style={{ inset: 40, filter: "blur(40px)" }}
+          aria-hidden
+        />
+
+        {/* SVG with ring, single rotating beam, and connection lines */}
+        <svg
+          width={SIZE}
+          height={SIZE}
+          viewBox={`0 0 ${SIZE} ${SIZE}`}
+          className="absolute inset-0"
+          style={{ pointerEvents: "none" }}
+        >
+          {/* Dashed orbit ring */}
+          <circle cx={CENTER} cy={CENTER} r={RING_R} fill="none" stroke="#d4d4d8" strokeWidth="1" strokeDasharray="4 6" opacity="0.6" />
+
+          {/* Connection lines from center to each skill (static, no SMIL) */}
+          {skills.map((s, i) => {
+            const a = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
+            const ex = CENTER + Math.cos(a) * RING_R;
+            const ey = CENTER + Math.sin(a) * RING_R;
+            return (
+              <line
+                key={s.name}
+                x1={CENTER} y1={CENTER} x2={ex} y2={ey}
+                stroke="#e4e4e7" strokeWidth="1" strokeDasharray="2 4" opacity="0.55"
+              />
+            );
+          })}
+
+          {/* Single rotating scan beam (CSS-driven on the <g> via class) */}
+          <g className="jp-scan-beam" style={{ transformOrigin: `${CENTER}px ${CENTER}px` }}>
+            <defs>
+              <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="#3b82f6" stopOpacity="0.7" />
+                <stop offset="1" stopColor="#3b82f6" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <rect x={CENTER} y={CENTER - 1} width={RING_R} height="2" fill="url(#beam)" />
+          </g>
+        </svg>
+
+        {/* Central AI brain — guaranteed centered via translate */}
+        <div
+          className="absolute"
+          style={{ left: "50%", top: "50%", width: 96, height: 96, transform: "translate(-50%, -50%)", zIndex: 30 }}
+        >
+          <div className="jp-conic-slow absolute inset-0 rounded-full p-[2px]">
+            <div className="w-full h-full rounded-full bg-white flex items-center justify-center shadow-[0_18px_50px_-12px_rgba(15,23,42,0.25)]">
+              <Sparkles className="w-8 h-8 text-zinc-900" />
+            </div>
+          </div>
+        </div>
+
+        {/* Skill chips placed on the ring via top/left percentages of the inner box */}
+        {skills.map((s, i) => {
+          const a = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
+          const x = Math.cos(a) * RING_R;
+          const y = Math.sin(a) * RING_R;
+          return (
+            <div
+              key={s.name}
+              className="absolute"
+              style={{
+                left: "50%",
+                top: "50%",
+                transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
+                zIndex: 20,
+              }}
+            >
+              <div className="bg-white border border-zinc-200 shadow-md px-2.5 py-1 rounded-full text-xs font-medium text-zinc-800 whitespace-nowrap flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+                {s.name}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Status pill at bottom — positioned relative to the SIZE box */}
+        <div
+          className="absolute"
+          style={{ left: "50%", bottom: 6, transform: "translateX(-50%)", zIndex: 30 }}
+        >
+          <div className="bg-white border border-zinc-200 shadow-sm rounded-full px-3 py-1.5 flex items-center gap-2 text-[11px] font-medium text-zinc-700 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="font-mono">8 skills · 12 keywords · ATS 94</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
