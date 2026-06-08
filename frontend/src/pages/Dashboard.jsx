@@ -5,6 +5,9 @@ import { Plane, LogOut, Upload, Rocket, FileText, Sparkles, ShieldCheck, Linkedi
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
+import ResumeManager from "../components/app/ResumeManager";
+import ShareWidget from "../components/app/ShareWidget";
+import ReferralWidget from "../components/app/ReferralWidget";
 
 export default function Dashboard() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -76,40 +79,40 @@ export default function Dashboard() {
     <div className="min-h-screen bg-zinc-50/40" data-testid="dashboard-page">
       {/* Top */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-zinc-200 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full jp-conic p-[1.5px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full jp-conic p-[1.5px] shrink-0">
               <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                <Plane className="w-4 h-4 -rotate-12 text-zinc-900" />
+                <Plane className="w-3.5 h-3.5 sm:w-4 sm:h-4 -rotate-12 text-zinc-900" />
               </div>
             </div>
-            <span className="font-display font-bold tracking-tight">JobPilot</span>
-            <span className="ml-3 text-xs uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 font-semibold" data-testid="dashboard-plan-badge">{plan}</span>
+            <span className="font-display font-bold tracking-tight text-sm sm:text-base">JobPilot</span>
+            <span className="ml-2 sm:ml-3 text-[10px] sm:text-xs uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 font-semibold" data-testid="dashboard-plan-badge">{plan}</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {plan === "free" && (
-              <Link to="/pricing-checkout" className="hidden sm:inline-flex jp-btn-primary text-sm px-4 py-2 rounded-full" data-testid="dashboard-upgrade">
-                Upgrade · ₹499
+              <Link to="/pricing-checkout" className="jp-btn-primary text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap" data-testid="dashboard-upgrade">
+                <span className="hidden sm:inline">Upgrade · </span>₹499
               </Link>
             )}
-            <button onClick={async () => { await signOut(); nav("/"); }} className="text-sm text-zinc-500 hover:text-zinc-900 inline-flex items-center gap-1.5" data-testid="dashboard-signout">
-              <LogOut className="w-4 h-4" /> Sign out
+            <button onClick={async () => { await signOut(); nav("/"); }} className="text-xs sm:text-sm text-zinc-500 hover:text-zinc-900 inline-flex items-center gap-1.5" data-testid="dashboard-signout">
+              <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Sign out</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10">
         {/* Greeting + hero KPIs */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 sm:gap-6 mb-6 sm:mb-8">
           <div>
-            <span className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold">Welcome back</span>
-            <h1 className="font-display text-4xl md:text-5xl tracking-[-0.03em] text-zinc-900 font-medium mt-1">
+            <span className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold">Welcome back</span>
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl tracking-[-0.03em] text-zinc-900 font-medium mt-1">
               Hi, {(profile.full_name || user.email || "").split(" ")[0] || "there"}.
             </h1>
-            <p className="text-zinc-500 mt-1.5">Your pilot is {plan === "free" ? "in recon mode" : "actively flying"} · {planLimit} applications / month</p>
+            <p className="text-sm sm:text-base text-zinc-500 mt-1.5">Your pilot is {plan === "free" ? "in recon mode" : "actively flying"} · {planLimit} applications / month</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-3 md:flex md:flex-wrap gap-2 sm:gap-3">
             <KPI label="Applications" value={profile.applications_count || 0} testid="kpi-apps" />
             <KPI label="Interviews" value={profile.interviews_count || 0} testid="kpi-interviews" />
             <KPI label="Offers" value={profile.offers_count || 0} testid="kpi-offers" />
@@ -118,19 +121,19 @@ export default function Dashboard() {
 
         {/* Free tier banner */}
         {plan === "free" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-gradient-to-r from-zinc-950 to-zinc-800 text-white p-5 md:p-6 mb-8 flex items-center justify-between gap-4" data-testid="free-tier-banner">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center"><Rocket className="w-5 h-5" /></div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-gradient-to-r from-zinc-950 to-zinc-800 text-white p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4" data-testid="free-tier-banner">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0"><Rocket className="w-5 h-5" /></div>
               <div>
-                <div className="font-semibold">Auto-apply is locked on Free</div>
-                <div className="text-sm text-white/60">You can run AI resume update, ATS check, LinkedIn optimizer and see 10 matched jobs. Unlock auto-apply with Starter.</div>
+                <div className="font-semibold text-sm sm:text-base">Auto-apply is locked on Free</div>
+                <div className="text-xs sm:text-sm text-white/60">Run AI resume update, ATS check, LinkedIn optimizer and see 10 matched jobs. Unlock auto-apply with Starter.</div>
               </div>
             </div>
-            <Link to="/pricing-checkout" className="bg-white text-zinc-900 text-sm px-4 py-2 rounded-full font-medium hover:bg-zinc-100 inline-flex items-center gap-2 shrink-0" data-testid="free-tier-upgrade">Upgrade <ArrowUpRight className="w-4 h-4" /></Link>
+            <Link to="/pricing-checkout" className="bg-white text-zinc-900 text-sm px-4 py-2 rounded-full font-medium hover:bg-zinc-100 inline-flex items-center gap-2 shrink-0 self-start sm:self-auto" data-testid="free-tier-upgrade">Upgrade <ArrowUpRight className="w-4 h-4" /></Link>
           </motion.div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-5 sm:gap-6">
           {/* AI Tools */}
           <div className="lg:col-span-1 space-y-4">
             <SectionLabel>Your resume</SectionLabel>
@@ -177,14 +180,14 @@ export default function Dashboard() {
             <SectionLabel>Application timeline</SectionLabel>
             <div className="mt-3 jp-card rounded-2xl divide-y divide-zinc-100 overflow-hidden">
               {apps.map((a) => (
-                <div key={a.id} className="px-5 py-3.5 flex items-center justify-between text-sm" data-testid={`app-row-${a.id}`}>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="font-semibold text-zinc-900">{a.company}</span>
-                    <span className="text-zinc-400">·</span>
-                    <span className="text-zinc-600">{a.role}</span>
+                <div key={a.id} className="px-4 sm:px-5 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-sm" data-testid={`app-row-${a.id}`}>
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="font-semibold text-zinc-900 truncate">{a.company}</span>
+                    <span className="text-zinc-400 hidden sm:inline">·</span>
+                    <span className="text-zinc-600 truncate">{a.role}</span>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-zinc-400 font-mono">
+                  <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-zinc-400 font-mono pl-6 sm:pl-0">
                     <span>{a.platform}</span>
                     <span>{new Date(a.submitted_at).toLocaleDateString()}</span>
                   </div>
@@ -204,9 +207,9 @@ function SectionLabel({ children }) {
 
 function KPI({ label, value, testid }) {
   return (
-    <div className="jp-card rounded-2xl px-5 py-3.5" data-testid={testid}>
-      <div className="text-xs uppercase tracking-[0.16em] text-zinc-400 font-semibold">{label}</div>
-      <div className="font-display text-2xl mt-0.5 font-medium">{value}</div>
+    <div className="jp-card rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-3.5 min-w-0" data-testid={testid}>
+      <div className="text-[10px] sm:text-xs uppercase tracking-[0.16em] text-zinc-400 font-semibold truncate">{label}</div>
+      <div className="font-display text-lg sm:text-2xl mt-0.5 font-medium">{value}</div>
     </div>
   );
 }

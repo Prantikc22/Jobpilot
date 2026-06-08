@@ -18,6 +18,31 @@ Build JobPilot - a premium, cinematic landing page + full SaaS for an autonomous
 3. **Pro** — 300 + Career Shield + priority
 4. **Admin** — Operations console for user/plan/order/application management
 
+## What's been implemented (2026-02-08)
+
+### Hero Section Overhaul (2026-02-08)
+- New copy: "We apply only to jobs that fit YOU." with concrete LinkedIn/Indeed/Workday/Greenhouse mention
+- New trust badge: "Searching 120,000+ jobs daily" with live pulse dot
+- 6 floating platform chips evenly distributed around dashboard (added Workday + Greenhouse)
+- Dashboard ~20% larger (290px wide), centered properly (fixed framer-motion transform clash with translate-x/y-1/2)
+- Slow ticking metrics: Apps 1247→1249, Response 34→35, Offers 7→8
+- CTA hierarchy: Black primary "Start Applying Today" + Ghost secondary "See How It Works"
+- Trust microcopy under CTAs: ✓ Targeted only · ✓ No spam · ✓ Human-reviewed
+- Orbit ring opacity reduced to ~25% (almost invisible) — chips feel natural
+
+### Performance optimizations (2026-02-08)
+- Lazy-loaded below-the-fold landing sections (ScrollStory, BentoFeatures, ActivityFeed, Statistics, Pricing, FinalCTA, Footer)
+- Lazy-loaded all non-Landing routes (SignIn/SignUp/Onboarding/Dashboard/Pricing/Admin/Share)
+- Trimmed font weights (cabinet-grotesk 500/700, satoshi 400/500/700, mono 400)
+- Disabled backdrop-filter on mobile (<640px) — major paint cost
+- Reduced mesh blob blur & disabled animation on mobile
+
+### Mobile responsiveness (2026-02-08)
+- Dashboard header compact on mobile; KPIs in 3-col grid
+- Free-tier banner stacks; application timeline rows stack
+- Onboarding padding/typography scale-down on mobile
+- Hero section padding scales, CTAs stack to full width on mobile
+
 ## What's been implemented (2026-02-06)
 
 ### Landing page (world-class)

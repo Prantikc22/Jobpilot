@@ -117,9 +117,9 @@ export default function Onboarding() {
         <span className="font-display font-bold tracking-tight">JobPilot</span>
       </a>
 
-      <div className="relative max-w-2xl mx-auto pt-24 pb-16 px-6">
+      <div className="relative max-w-2xl mx-auto pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6">
         {/* Progress */}
-        <div className="flex items-center gap-2 mb-7">
+        <div className="flex items-center gap-1 sm:gap-2 mb-5 sm:mb-7">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
@@ -128,7 +128,7 @@ export default function Onboarding() {
             />
           ))}
         </div>
-        <div className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">Step {step} of 8</div>
+        <div className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">Step {step} of 8</div>
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -137,7 +137,7 @@ export default function Onboarding() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.35 }}
-            className="jp-glass rounded-3xl p-7 md:p-8"
+            className="jp-glass rounded-2xl sm:rounded-3xl p-5 sm:p-7 md:p-8"
           >
             {step === 1 && (
               <Step title="Tell us who you are" sub="Just the essentials. We'll fill in the rest from your resume.">
@@ -265,10 +265,10 @@ function Step({ title, sub, icon, children }) {
     <div data-testid="onboarding-step">
       <div className="flex items-center gap-2">
         {icon}
-        <h2 className="font-display text-2xl md:text-3xl tracking-[-0.02em] text-zinc-900 font-medium">{title}</h2>
+        <h2 className="font-display text-xl sm:text-2xl md:text-3xl tracking-[-0.02em] text-zinc-900 font-medium">{title}</h2>
       </div>
-      <p className="text-zinc-500 mt-1">{sub}</p>
-      <div className="mt-6">{children}</div>
+      <p className="text-sm sm:text-base text-zinc-500 mt-1">{sub}</p>
+      <div className="mt-5 sm:mt-6">{children}</div>
     </div>
   );
 }

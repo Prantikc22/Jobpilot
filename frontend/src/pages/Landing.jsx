@@ -1,12 +1,16 @@
+import { lazy, Suspense } from "react";
 import Navbar from "../components/landing/Navbar";
 import Hero from "../components/landing/Hero";
-import ScrollStory from "../components/landing/ScrollStory";
-import BentoFeatures from "../components/landing/BentoFeatures";
-import ActivityFeed from "../components/landing/ActivityFeed";
-import Statistics from "../components/landing/Statistics";
-import Pricing from "../components/landing/Pricing";
-import FinalCTA from "../components/landing/FinalCTA";
-import Footer from "../components/landing/Footer";
+
+const ScrollStory = lazy(() => import("../components/landing/ScrollStory"));
+const BentoFeatures = lazy(() => import("../components/landing/BentoFeatures"));
+const ActivityFeed = lazy(() => import("../components/landing/ActivityFeed"));
+const Statistics = lazy(() => import("../components/landing/Statistics"));
+const Pricing = lazy(() => import("../components/landing/Pricing"));
+const FinalCTA = lazy(() => import("../components/landing/FinalCTA"));
+const Footer = lazy(() => import("../components/landing/Footer"));
+
+const Skeleton = () => <div className="h-32" aria-hidden />;
 
 export default function Landing() {
   return (
@@ -14,14 +18,18 @@ export default function Landing() {
       <Navbar />
       <main>
         <Hero />
-        <ScrollStory />
-        <BentoFeatures />
-        <ActivityFeed />
-        <Statistics />
-        <Pricing />
-        <FinalCTA />
+        <Suspense fallback={<Skeleton />}>
+          <ScrollStory />
+          <BentoFeatures />
+          <ActivityFeed />
+          <Statistics />
+          <Pricing />
+          <FinalCTA />
+        </Suspense>
       </main>
-      <Footer />
+      <Suspense fallback={<Skeleton />}>
+        <Footer />
+      </Suspense>
     </div>
   );
 }

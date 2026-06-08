@@ -10,13 +10,16 @@
     "signout": "Sign out"
   },
   "hero": {
-    "badge": "Now applying for 3,200+ professionals this week",
-    "title1": "Your Job Search.",
-    "title2": "On Autopilot.",
-    "sub": "Upload your resume once. We find relevant jobs, tailor each application to your experience, and apply on your behalf — while you focus on interviews.",
+    "badge": "Searching 120,000+ jobs daily",
+    "title1": "We apply only to jobs",
+    "title2": "that fit YOU.",
+    "sub": "We search LinkedIn, Indeed, Workday, Greenhouse, and hundreds of company career pages to find opportunities matched to your skills, experience, location, and salary expectations — while you sleep, we find you jobs.",
     "primary": "Start Applying Today",
-    "secondary": "Watch Demo",
-    "trustline": "Trusted by candidates from"
+    "secondary": "See How It Works",
+    "trustline": "Trusted by candidates from",
+    "micro1": "Targeted applications only",
+    "micro2": "No mass spam applications",
+    "micro3": "Human-reviewed submissions"
   },
   "story": {
     "label": "The story",

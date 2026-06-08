@@ -10,13 +10,16 @@
     "signout": "Cerrar sesión"
   },
   "hero": {
-    "badge": "Aplicando para 3,200+ profesionales esta semana",
-    "title1": "Tu búsqueda de empleo.",
-    "title2": "En piloto automático.",
-    "sub": "Sube tu CV una vez. Encontramos puestos relevantes, adaptamos cada postulación a tu experiencia y aplicamos por ti — mientras tú te concentras en las entrevistas.",
+    "badge": "Buscando 120,000+ empleos cada día",
+    "title1": "Solo aplicamos a empleos",
+    "title2": "que encajan contigo.",
+    "sub": "Buscamos en LinkedIn, Indeed, Workday, Greenhouse y cientos de páginas de empleo de empresas para encontrar oportunidades que coincidan con tus habilidades, experiencia, ubicación y expectativas salariales — mientras duermes, te encontramos empleos.",
     "primary": "Empezar a aplicar hoy",
-    "secondary": "Ver demo",
-    "trustline": "Confiado por candidatos de"
+    "secondary": "Ver cómo funciona",
+    "trustline": "Confiado por candidatos de",
+    "micro1": "Solo aplicaciones dirigidas",
+    "micro2": "Sin envíos masivos",
+    "micro3": "Revisado por humanos"
   },
   "story": {
     "label": "La historia",
