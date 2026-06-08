@@ -20,6 +20,10 @@ const Privacy = lazy(() => import("@/pages/legal/Privacy"));
 const Shipping = lazy(() => import("@/pages/legal/Shipping"));
 const Contact = lazy(() => import("@/pages/legal/Contact"));
 const About = lazy(() => import("@/pages/legal/About"));
+const ATSChecker = lazy(() => import("@/pages/tools/ATSChecker"));
+const ResumeOptimizer = lazy(() => import("@/pages/tools/ResumeOptimizer"));
+const LinkedInOptimizer = lazy(() => import("@/pages/tools/LinkedInOptimizer"));
+const ResumeParser = lazy(() => import("@/pages/tools/ResumeParser"));
 
 import { AuthProvider } from "@/contexts/AuthContext";
 
@@ -51,6 +55,10 @@ function App() {
               <Route path="/shipping" element={<Shipping />} />
               <Route path="/contact-us" element={<Contact />} />
               <Route path="/about-us" element={<About />} />
+              <Route path="/tools/ats" element={<ATSChecker />} />
+              <Route path="/tools/optimize" element={<ResumeOptimizer />} />
+              <Route path="/tools/linkedin" element={<LinkedInOptimizer />} />
+              <Route path="/tools/parse" element={<ResumeParser />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

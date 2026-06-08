@@ -14,7 +14,7 @@ load_dotenv(ROOT_DIR / ".env")
 from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
 
-from db import get_db, close as close_db
+from db import get_db, close as close_db, ping as db_ping
 from services.supabase_service import ensure_bucket
 from routes.users import router as users_router
 from routes.resumes import router as resumes_router
@@ -40,13 +40,7 @@ async def root():
 
 @api_router.get("/health")
 async def health():
-    db = get_db()
-    try:
-        await db.command("ping")
-        mongo_ok = True
-    except Exception:
-        mongo_ok = False
-    return {"ok": True, "mongo": mongo_ok}
+    return {"ok": True, "db": db_ping(), "backend": "supabase-postgres"}
 
 
 api_router.include_router(users_router)
@@ -81,6 +75,16 @@ async def on_startup():
         ensure_bucket()
     except Exception as e:
         logger.warning(f"Bucket ensure failed: {e}")
+
+    # One-shot Mongo → Supabase data migration (idempotent)
+    try:
+        from migration import migrate_mongo_to_supabase
+        result = await migrate_mongo_to_supabase()
+        if not result.get("skipped"):
+            logger.info(f"[startup] migration summary: {result.get('summary')}")
+    except Exception as e:
+        logger.warning(f"[startup] migration failed: {e}")
+
     # Background autopilot loop
     import asyncio
 

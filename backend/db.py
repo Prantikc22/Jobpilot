@@ -1,25 +1,19 @@
-"""MongoDB connection singleton."""
-import os
-from motor.motor_asyncio import AsyncIOMotorClient
+"""Database singleton — now backed by Supabase Postgres.
 
-_client: AsyncIOMotorClient | None = None
-_db = None
-
-
-def _init():
-    global _client, _db
-    if _client is None:
-        _client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-        _db = _client[os.environ["DB_NAME"]]
-    return _db
+The public surface (`get_db()`, `close()`) is unchanged so existing route
+code keeps working untouched. Under the hood, every collection access is
+translated to a Supabase Postgres query via `db_supabase.py`.
+"""
+from db_supabase import get_db as _sb_get_db, close as _sb_close, ping as _sb_ping  # noqa: F401
 
 
 def get_db():
-    return _init()
+    return _sb_get_db()
 
 
 def close():
-    global _client
-    if _client is not None:
-        _client.close()
-        _client = None
+    _sb_close()
+
+
+def ping() -> bool:
+    return _sb_ping()

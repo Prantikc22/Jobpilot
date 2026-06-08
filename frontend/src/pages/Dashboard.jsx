@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Plane, LogOut, FileText, Sparkles, ShieldCheck, Linkedin, Loader2,
   Briefcase, CheckCircle2, ArrowUpRight, Rocket, Zap, Activity,
@@ -21,8 +21,6 @@ export default function Dashboard() {
   const [queue, setQueue] = useState([]);
   const [status, setStatus] = useState(null);
   const [credits, setCredits] = useState(null);
-  const [loadingAI, setLoadingAI] = useState(null);
-  const [aiPanel, setAiPanel] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -50,34 +48,6 @@ export default function Dashboard() {
       // silent — dashboard re-polls
     }
   }
-
-  const runAI = async (key, fn, label) => {
-    if (credits && credits.remaining <= 0) {
-      toast.error(`You've used all ${credits.total} AI credits this month. They reset on the 1st.`);
-      return;
-    }
-    setLoadingAI(key);
-    setAiPanel(null);
-    try {
-      const result = await fn();
-      setAiPanel({ key, label, result });
-      // refresh credits after a successful call
-      api.get("/ai/credits").then((r) => setCredits(r.data)).catch(() => {});
-    } catch (e) {
-      const status = e.response?.status;
-      const detail = e.response?.data?.detail || "AI failed";
-      if (status === 402) {
-        toast.error(detail);
-        api.get("/ai/credits").then((r) => setCredits(r.data)).catch(() => {});
-      } else if (status === 503) {
-        toast.error(detail);
-      } else {
-        toast.error(detail);
-      }
-    } finally {
-      setLoadingAI(null);
-    }
-  };
 
   if (authLoading || !profile) {
     return (
@@ -172,60 +142,38 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
-            <AITool
+            <AIToolLink
+              to="/tools/optimize"
               icon={Sparkles}
               title="AI Resume Optimizer"
               desc="Per-role rewrite + ATS uplift"
-              busy={loadingAI === "opt"}
-              disabled={!credits || credits.remaining <= 0}
-              onRun={() => runAI("opt", () => api.post("/ai/optimize-resume", {}).then(r => r.data), "Resume Optimizer")}
+              outOfCredits={credits && credits.remaining <= 0}
               testid="ai-resume-optimizer"
             />
-            <AITool
+            <AIToolLink
+              to="/tools/ats"
               icon={FileText}
               title="ATS Checker"
               desc="Real ATS score + fixes"
-              busy={loadingAI === "ats"}
-              disabled={!credits || credits.remaining <= 0}
-              onRun={() => runAI("ats", () => api.post("/ai/ats-check").then(r => r.data), "ATS Checker")}
+              outOfCredits={credits && credits.remaining <= 0}
               testid="ai-ats-checker"
             />
-            <AITool
+            <AIToolLink
+              to="/tools/linkedin"
               icon={Linkedin}
               title="LinkedIn Optimizer"
               desc="Headline + About + Skills"
-              busy={loadingAI === "li"}
-              disabled={!credits || credits.remaining <= 0}
-              onRun={() => runAI("li", () => api.post("/ai/linkedin-optimize").then(r => r.data), "LinkedIn Optimizer")}
+              outOfCredits={credits && credits.remaining <= 0}
               testid="ai-linkedin"
             />
-            <AITool
+            <AIToolLink
+              to="/tools/parse"
               icon={ShieldCheck}
               title="Parse Resume"
               desc="Structured extraction"
-              busy={loadingAI === "parse"}
-              disabled={!credits || credits.remaining <= 0}
-              onRun={() => runAI("parse", () => api.post("/resumes/parse").then(r => r.data), "Resume Parser")}
+              outOfCredits={credits && credits.remaining <= 0}
               testid="ai-parse"
             />
-
-            <AnimatePresence>
-              {aiPanel && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="jp-card rounded-2xl p-5 mt-2"
-                  data-testid="ai-result-panel"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold">{aiPanel.label} · result</h3>
-                    <button onClick={() => setAiPanel(null)} className="text-xs text-zinc-400 hover:text-zinc-700">close</button>
-                  </div>
-                  <pre className="text-xs bg-zinc-50 rounded-xl p-3 overflow-auto max-h-80 leading-relaxed text-zinc-700 font-mono">{JSON.stringify(aiPanel.result, null, 2)}</pre>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             <SectionLabel>Share & invite</SectionLabel>
             <ShareWidget profile={profile} />
@@ -431,6 +379,29 @@ function AITool({ icon: Icon, title, desc, busy, disabled, onRun, testid }) {
         <ArrowUpRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-700 transition-colors" />
       </div>
     </button>
+  );
+}
+
+function AIToolLink({ icon: Icon, title, desc, to, outOfCredits, testid }) {
+  return (
+    <Link
+      to={to}
+      className={`block jp-card rounded-2xl p-4 transition-all group hover:border-zinc-300 ${
+        outOfCredits ? "opacity-60" : ""
+      }`}
+      data-testid={testid}
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center">
+          <Icon className="w-4 h-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-zinc-900 text-sm">{title}</div>
+          <div className="text-xs text-zinc-500 truncate">{desc}{outOfCredits ? " · out of credits" : ""}</div>
+        </div>
+        <ArrowUpRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-700 transition-colors" />
+      </div>
+    </Link>
   );
 }
 
