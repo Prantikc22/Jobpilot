@@ -167,12 +167,15 @@ class _Collection:
     def __init__(self, name: str):
         self.name = name
 
-    async def find_one(self, query: dict, projection: Optional[dict] = None):
+    async def find_one(self, query: dict, projection: Optional[dict] = None, sort: Optional[list] = None):
         cols = _projection_to_cols(projection)
 
         def _run():
             q = _sb().table(self.name).select(cols)
             q = _apply_filters(q, query)
+            if sort:
+                for col, direction in sort:
+                    q = q.order(col, desc=(direction == -1))
             return q.limit(1).execute()
 
         res = await asyncio.to_thread(_run)

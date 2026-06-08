@@ -44,7 +44,8 @@ class TestHealth:
         assert r.status_code == 200
         body = r.json()
         assert body.get("ok") is True
-        assert body.get("mongo") is True
+        assert body.get("db") is True
+        assert body.get("backend") == "supabase-postgres"
 
 
 # ---------------- Activity (public) ----------------
