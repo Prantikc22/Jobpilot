@@ -121,7 +121,8 @@ async def on_startup():
                 logger.warning(f"[autopilot] tick failed: {e}")
             await asyncio.sleep(60)
 
-    app.state.autopilot_task = asyncio.create_task(_autopilot_loop())
+    if not os.environ.get("VERCEL"):
+        app.state.autopilot_task = asyncio.create_task(_autopilot_loop())
 
 
 @app.on_event("shutdown")
