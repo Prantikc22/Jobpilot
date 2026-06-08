@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from auth_deps import get_current_user
 from db import get_db
-from services.openrouter_service import chat_json
+from services.llm_service import chat_json
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 

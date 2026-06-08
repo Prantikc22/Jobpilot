@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from auth_deps import get_current_user
 from db import get_db
 from services.supabase_service import upload_resume, get_signed_url
-from services.openrouter_service import chat_json
+from services.llm_service import chat_json
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
