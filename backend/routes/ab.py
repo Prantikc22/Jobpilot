@@ -81,18 +81,20 @@ async def stats(admin=Depends(get_current_admin), db=Depends(get_db)):
     """Admin-only A/B aggregate."""
     result = {}
     for exp in EXPERIMENTS.keys():
-        pipeline = [
-            {"$match": {"experiment": exp}},
-            {"$group": {"_id": {"variant": "$variant", "event": "$event"}, "count": {"$sum": 1}}},
-        ]
-        agg = await db.ab_events.aggregate(pipeline).to_list(100)
-        breakdown = {}
-        for row in agg:
-            v = row["_id"]["variant"]
-            e = row["_id"]["event"]
+        try:
+            events = await db.ab_events.find({"experiment": exp}).to_list(10000)
+        except Exception:
+            events = []
+        breakdown: dict = {}
+        for row in events:
+            v = row.get("variant", "A")
+            e = row.get("event", "view")
+            if v not in EXPERIMENTS.get(exp, {}):
+                continue
+            if e not in ("view", "click", "convert"):
+                continue
             breakdown.setdefault(v, {"view": 0, "click": 0, "convert": 0})
-            breakdown[v][e] = row["count"]
-        # CTR / CVR
+            breakdown[v][e] += 1
         for v, counts in breakdown.items():
             views = counts["view"] or 1
             counts["click_rate"] = round(counts["click"] / views * 100, 2)
