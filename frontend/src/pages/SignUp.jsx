@@ -15,6 +15,7 @@ export default function SignUp() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
   const [refCode] = useState(refCodeFromUrl);
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
@@ -29,6 +30,10 @@ export default function SignUp() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (pwd !== confirmPwd) {
+      toast.error("Passwords don't match");
+      return;
+    }
     setLoading(true);
     try {
       // 1) Create + auto-confirm user via backend (uses Supabase admin API)
@@ -77,6 +82,7 @@ export default function SignUp() {
         <Field label="Full name" value={fullName} onChange={setFullName} required testid="signup-name" />
         <Field label="Work email" type="email" value={email} onChange={setEmail} required testid="signup-email" />
         <Field label="Password" type="password" value={pwd} onChange={setPwd} required testid="signup-password" />
+        <Field label="Confirm password" type="password" value={confirmPwd} onChange={setConfirmPwd} required testid="signup-confirm-password" />
         {refCode && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs" data-testid="signup-ref-banner">
             <Gift className="w-3.5 h-3.5" />

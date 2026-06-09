@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 
 from services.supabase_service import get_admin_client
+from services.email_service import send_welcome_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -51,10 +52,14 @@ async def signup(body: SignupBody):
     user = getattr(result, "user", None) or (result.get("user") if isinstance(result, dict) else None)
     if not user:
         raise HTTPException(status_code=500, detail="Signup failed: no user returned")
+
+    user_email = getattr(user, "email", None) or (user.get("email") if isinstance(user, dict) else None)
+    send_welcome_email(to_email=user_email, full_name=body.full_name or "")
+
     return {
         "ok": True,
         "user_id": getattr(user, "id", None) or (user.get("id") if isinstance(user, dict) else None),
-        "email": getattr(user, "email", None) or (user.get("email") if isinstance(user, dict) else None),
+        "email": user_email,
     }
 
 
