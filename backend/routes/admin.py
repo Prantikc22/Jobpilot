@@ -1,6 +1,8 @@
 """Admin routes - separate JWT auth."""
 import os
+import uuid
 from datetime import datetime, timezone
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -20,6 +22,37 @@ class AdminLogin(BaseModel):
 
 class PlanChange(BaseModel):
     plan: str
+
+
+class UserPatch(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    target_roles: Optional[list[str]] = None
+    target_countries: Optional[list[str]] = None
+    preferred_salary: Optional[str] = None
+    plan: Optional[str] = None
+    applications_count: Optional[int] = None
+    interviews_count: Optional[int] = None
+    offers_count: Optional[int] = None
+    job_search_email: Optional[str] = None
+    job_search_email_password: Optional[str] = None
+
+
+class ApplicationPatch(BaseModel):
+    company: Optional[str] = None
+    role: Optional[str] = None
+    job_url: Optional[str] = None
+    platform: Optional[str] = None
+    status: Optional[str] = None
+
+
+class AddApplication(BaseModel):
+    company: str
+    role: str
+    platform: str = "Manual"
+    job_url: Optional[str] = None
+    status: str = "submitted"
 
 
 @router.post("/login")
@@ -62,31 +95,18 @@ async def admin_stats(admin=Depends(get_current_admin), db=Depends(get_db)):
 
 @router.get("/users")
 async def list_users(admin=Depends(get_current_admin), db=Depends(get_db), limit: int = 100):
-    users = await db.users.find({}, {"_id": 0, "job_search_email_password": 0, "resume_text": 0}).sort("created_at", -1).to_list(limit)
+    users = await db.users.find({}, {"_id": 0, "resume_text": 0}).sort("created_at", -1).to_list(limit)
     return {"users": users}
 
 
 @router.get("/users/{supabase_user_id}")
 async def get_user_detail(supabase_user_id: str, admin=Depends(get_current_admin), db=Depends(get_db)):
-    user = await db.users.find_one({"supabase_user_id": supabase_user_id}, {"_id": 0, "job_search_email_password": 0, "resume_text": 0})
+    user = await db.users.find_one({"supabase_user_id": supabase_user_id}, {"_id": 0, "resume_text": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    apps = await db.applications.find({"supabase_user_id": supabase_user_id}, {"_id": 0}).sort("submitted_at", -1).to_list(100)
+    apps = await db.applications.find({"supabase_user_id": supabase_user_id}, {"_id": 0}).sort("submitted_at", -1).to_list(200)
     orders = await db.orders.find({"supabase_user_id": supabase_user_id}, {"_id": 0}).sort("created_at", -1).to_list(50)
     return {"user": user, "applications": apps, "orders": orders}
-
-
-class UserPatch(BaseModel):
-    full_name: str | None = None
-    phone: str | None = None
-    linkedin_url: str | None = None
-    target_roles: list[str] | None = None
-    target_countries: list[str] | None = None
-    preferred_salary: str | None = None
-    plan: str | None = None
-    applications_count: int | None = None
-    interviews_count: int | None = None
-    offers_count: int | None = None
 
 
 @router.patch("/users/{supabase_user_id}")
@@ -97,9 +117,7 @@ async def patch_user(supabase_user_id: str, body: UserPatch, admin=Depends(get_c
     if not data:
         raise HTTPException(status_code=400, detail="Nothing to update")
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    result = await db.users.update_one({"supabase_user_id": supabase_user_id}, {"$set": data})
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
+    await db.users.update_one({"supabase_user_id": supabase_user_id}, {"$set": data})
     return {"ok": True, "fields": list(data.keys())}
 
 
@@ -107,12 +125,10 @@ async def patch_user(supabase_user_id: str, body: UserPatch, admin=Depends(get_c
 async def change_plan(supabase_user_id: str, body: PlanChange, admin=Depends(get_current_admin), db=Depends(get_db)):
     if body.plan not in ["free", "starter", "pro"]:
         raise HTTPException(status_code=400, detail="Invalid plan")
-    result = await db.users.update_one(
+    await db.users.update_one(
         {"supabase_user_id": supabase_user_id},
         {"$set": {"plan": body.plan, "updated_at": datetime.now(timezone.utc).isoformat()}},
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
     return {"ok": True}
 
 
@@ -126,6 +142,39 @@ async def list_orders(admin=Depends(get_current_admin), db=Depends(get_db), limi
 async def list_applications(admin=Depends(get_current_admin), db=Depends(get_db), limit: int = 200):
     apps = await db.applications.find({}, {"_id": 0}).sort("submitted_at", -1).to_list(limit)
     return {"applications": apps}
+
+
+@router.patch("/applications/{app_id}")
+async def patch_application(app_id: str, body: ApplicationPatch, admin=Depends(get_current_admin), db=Depends(get_db)):
+    data = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not data:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+    await db.applications.update_one({"id": app_id}, {"$set": data})
+    return {"ok": True}
+
+
+@router.post("/users/{supabase_user_id}/applications")
+async def add_application(
+    supabase_user_id: str,
+    body: AddApplication,
+    admin=Depends(get_current_admin),
+    db=Depends(get_db),
+):
+    doc = {
+        "id": str(uuid.uuid4()),
+        "supabase_user_id": supabase_user_id,
+        "company": body.company,
+        "role": body.role,
+        "platform": body.platform,
+        "job_url": body.job_url,
+        "status": body.status,
+        "submitted_by": "admin",
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
+        "match_score": None,
+        "job_id": None,
+    }
+    await db.applications.insert_one(doc)
+    return {"ok": True, "id": doc["id"]}
 
 
 @router.get("/webhook-events")

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Plane, LogOut, FileText, Sparkles, ShieldCheck, Linkedin, Loader2,
   Briefcase, CheckCircle2, ArrowUpRight, Rocket, Zap, Activity,
-  Radar, Clock,
+  Radar, Clock, Mail, Eye, EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
@@ -26,9 +26,9 @@ export default function Dashboard() {
     if (authLoading) return;
     if (!user) { nav("/signin"); return; }
     refresh();
-    const t = setInterval(refresh, 30_000); // live-poll every 30s
+    const t = setInterval(refresh, 30_000);
     return () => clearInterval(t);
-  }, [user, authLoading, nav]);
+  }, [user, authLoading, nav]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function refresh() {
     try {
@@ -61,10 +61,10 @@ export default function Dashboard() {
   const planLimit = { free: 0, starter: 100, pro: 300 }[plan];
   const submittedThisMonth = status?.applications_count ?? profile.applications_count ?? 0;
   const remaining = status?.remaining ?? Math.max(0, planLimit - submittedThisMonth);
+  const hasEmailCreds = profile.job_search_email || profile.use_applyagent_email;
 
   return (
     <div className="min-h-screen bg-zinc-50/40" data-testid="dashboard-page">
-      {/* Top */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-zinc-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
           <Link to="/" className="flex items-center gap-2 min-w-0">
@@ -94,10 +94,8 @@ export default function Dashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10">
-        {/* Hero: autopilot status */}
         <AutopilotHero profile={profile} status={status} plan={plan} remaining={remaining} />
 
-        {/* AI credits + KPIs row */}
         <div className="grid md:grid-cols-4 gap-4 mt-6">
           <CreditsCard credits={credits} />
           <KPI icon={Briefcase} label="Applications" value={submittedThisMonth} sub={`of ${planLimit || "—"} this month`} testid="kpi-apps" />
@@ -105,7 +103,6 @@ export default function Dashboard() {
           <KPI icon={Rocket} label="Offers" value={profile.offers_count || 0} sub="🎉" testid="kpi-offers" />
         </div>
 
-        {/* Free tier banner */}
         {plan === "free" && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -119,7 +116,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <div className="font-semibold text-sm sm:text-base">Autopilot is paused on Free</div>
-                <div className="text-xs sm:text-sm text-white/60">You still get 3 AI credits/month and can preview jobs. Upgrade to unlock the autopilot — we’ll apply on your behalf.</div>
+                <div className="text-xs sm:text-sm text-white/60">You still get 3 AI credits/month and can preview jobs. Upgrade to unlock the autopilot — we'll apply on your behalf.</div>
               </div>
             </div>
             <Link to="/pricing-checkout" className="bg-white text-zinc-900 text-sm px-4 py-2 rounded-full font-medium hover:bg-zinc-100 inline-flex items-center gap-2 shrink-0 self-start sm:self-auto" data-testid="free-tier-upgrade">
@@ -129,10 +126,16 @@ export default function Dashboard() {
         )}
 
         <div className="grid lg:grid-cols-3 gap-5 sm:gap-6 mt-6 sm:mt-8">
-          {/* Left rail: resume + AI tools */}
           <div className="lg:col-span-1 space-y-4">
             <SectionLabel>Your resume</SectionLabel>
             <ResumeManager profile={profile} onUpdated={refresh} />
+
+            {hasEmailCreds && (
+              <>
+                <SectionLabel>Job search email</SectionLabel>
+                <EmailCredsCard profile={profile} />
+              </>
+            )}
 
             <div className="flex items-center justify-between mt-2">
               <SectionLabel>AI tools</SectionLabel>
@@ -180,7 +183,6 @@ export default function Dashboard() {
             <ReferralWidget />
           </div>
 
-          {/* Center+right: autopilot queue + timeline */}
           <div className="lg:col-span-2 space-y-6">
             <div>
               <div className="flex items-center justify-between">
@@ -191,7 +193,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <p className="text-xs text-zinc-500 mt-1">
-                These are the jobs ApplyAgent will submit on your behalf next. You don’t need to apply — sit back.
+                These are the jobs ApplyAgent will submit on your behalf next. You don't need to apply — sit back.
               </p>
 
               <div className="grid sm:grid-cols-2 gap-3 mt-3">
@@ -226,14 +228,24 @@ export default function Dashboard() {
                     >
                       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span className="font-semibold text-zinc-900 truncate">{a.company}</span>
-                        <span className="text-zinc-400 hidden sm:inline">·</span>
-                        <span className="text-zinc-600 truncate">{a.role}</span>
+                        <div className="min-w-0">
+                          <span className="font-semibold text-zinc-900 truncate">{a.company}</span>
+                          <span className="text-zinc-400 hidden sm:inline"> · </span>
+                          <span className="text-zinc-600 truncate">{a.role}</span>
+                        </div>
                         {a.submitted_by === "autopilot" && (
                           <span className="text-[10px] uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-zinc-900 text-white font-semibold shrink-0">auto</span>
                         )}
+                        {a.submitted_by === "admin" && (
+                          <span className="text-[10px] uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold shrink-0">added</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-zinc-400 font-mono pl-6 sm:pl-0">
+                        {a.job_url && (
+                          <a href={a.job_url} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-900 underline underline-offset-2 truncate max-w-[120px]" onClick={(e) => e.stopPropagation()}>
+                            View job ↗
+                          </a>
+                        )}
                         <span>{a.platform}</span>
                         <span>{new Date(a.submitted_at).toLocaleDateString()} · {new Date(a.submitted_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                       </div>
@@ -244,6 +256,59 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function EmailCredsCard({ profile }) {
+  const [showPwd, setShowPwd] = useState(false);
+  const pending = profile.use_applyagent_email && !profile.job_search_email;
+
+  if (pending) {
+    return (
+      <div className="jp-card rounded-2xl p-4" data-testid="email-creds-pending">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-zinc-400 font-semibold mb-2">
+          <Mail className="w-3.5 h-3.5" /> Autopilot email
+        </div>
+        <div className="flex items-start gap-2.5">
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-300 mt-0.5 shrink-0" />
+          <p className="text-xs text-zinc-500 leading-relaxed">
+            Your dedicated ApplyAgent email will appear here after your first batch of applications is submitted.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="jp-card rounded-2xl p-4" data-testid="email-creds-card">
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-zinc-400 font-semibold mb-3">
+        <Mail className="w-3.5 h-3.5" /> Autopilot email
+      </div>
+      <div className="space-y-2">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400 mb-0.5">Email</div>
+          <div className="text-sm font-mono text-zinc-900 break-all">{profile.job_search_email}</div>
+        </div>
+        {profile.job_search_email_password && (
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.14em] text-zinc-400 mb-0.5">Password</div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-mono text-zinc-700 tracking-widest">
+                {showPwd ? profile.job_search_email_password : "●".repeat(Math.min(10, profile.job_search_email_password.length))}
+              </span>
+              <button
+                onClick={() => setShowPwd(!showPwd)}
+                className="text-zinc-400 hover:text-zinc-900 transition-colors"
+                title={showPwd ? "Hide password" : "Show password"}
+              >
+                {showPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="text-[11px] text-zinc-400 pt-1">Used by your autopilot to receive recruiter replies</div>
       </div>
     </div>
   );
@@ -355,30 +420,6 @@ function KPI({ icon: Icon, label, value, sub, testid }) {
       <div className="font-display text-2xl sm:text-3xl mt-1.5 font-medium tracking-tight">{value}</div>
       {sub && <div className="text-[11px] text-zinc-500 mt-0.5">{sub}</div>}
     </div>
-  );
-}
-
-function AITool({ icon: Icon, title, desc, busy, disabled, onRun, testid }) {
-  return (
-    <button
-      onClick={onRun}
-      disabled={busy || disabled}
-      className={`w-full text-left jp-card rounded-2xl p-4 transition-all group ${
-        disabled ? "opacity-50 cursor-not-allowed" : "hover:border-zinc-300"
-      }`}
-      data-testid={testid}
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center">
-          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}
-        </div>
-        <div className="flex-1">
-          <div className="font-semibold text-zinc-900 text-sm">{title}</div>
-          <div className="text-xs text-zinc-500">{desc}</div>
-        </div>
-        <ArrowUpRight className="w-4 h-4 text-zinc-300 group-hover:text-zinc-700 transition-colors" />
-      </div>
-    </button>
   );
 }
 

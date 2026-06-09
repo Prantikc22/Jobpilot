@@ -20,6 +20,7 @@ class OnboardingPayload(BaseModel):
     preferred_salary: Optional[str] = None
     job_search_email: Optional[str] = None
     job_search_email_password: Optional[str] = None
+    use_applyagent_email: Optional[bool] = None
     onboarding_step: Optional[int] = None
     onboarding_completed: Optional[bool] = None
 
@@ -37,13 +38,11 @@ async def _ensure_user(db, sb_user: dict) -> dict:
     uid = sb_user["id"]
     doc = await db.users.find_one({"supabase_user_id": uid}, {"_id": 0})
     if doc:
-        # Backfill referral_code / pricing_variant for users created before these features
         patch = {}
         if not doc.get("referral_code"):
             patch["referral_code"] = _generate_ref_code(doc.get("email"))
         if not doc.get("pricing_variant"):
             patch["pricing_variant"] = "A" if _secrets.randbelow(2) == 0 else "B"
-        # Auto-downgrade to free if subscription has expired
         if doc.get("plan") in ("starter", "pro") and doc.get("subscription_active_until"):
             try:
                 from datetime import datetime as _dt
@@ -67,13 +66,13 @@ async def _ensure_user(db, sb_user: dict) -> dict:
         "target_countries": [],
         "preferred_salary": None,
         "job_search_email": None,
-        # Note: stored encrypted-at-rest in mongo, never returned to frontend
         "job_search_email_password": None,
+        "use_applyagent_email": False,
         "resume_path": None,
         "resume_filename": None,
         "resume_url": None,
         "resume_parsed": None,
-        "plan": "free",  # free | starter | pro
+        "plan": "free",
         "applications_count": 0,
         "interviews_count": 0,
         "offers_count": 0,
@@ -90,17 +89,18 @@ async def _ensure_user(db, sb_user: dict) -> dict:
     return new_doc
 
 
-def _strip_secrets(doc: dict) -> dict:
+def _strip_internal(doc: dict) -> dict:
+    """Strip only internal DB fields. Job email creds are returned to the owner."""
     d = dict(doc)
-    d.pop("job_search_email_password", None)
     d.pop("_id", None)
+    d.pop("resume_text", None)
     return d
 
 
 @router.get("/me")
 async def get_me(user=Depends(get_current_user), db=Depends(get_db)):
     doc = await _ensure_user(db, user)
-    return _strip_secrets(doc)
+    return _strip_internal(doc)
 
 
 @router.put("/me")
@@ -110,4 +110,4 @@ async def update_me(payload: OnboardingPayload, user=Depends(get_current_user), 
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.users.update_one({"supabase_user_id": user["id"]}, {"$set": data})
     doc = await db.users.find_one({"supabase_user_id": user["id"]}, {"_id": 0})
-    return _strip_secrets(doc)
+    return _strip_internal(doc)

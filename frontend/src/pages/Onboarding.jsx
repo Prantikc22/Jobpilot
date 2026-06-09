@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Loader2, Upload, CheckCircle2, Sparkles, Plane } from "lucide-react";
+import { ArrowRight, ArrowLeft, Loader2, Upload, CheckCircle2, Sparkles, Plane, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
@@ -17,7 +17,6 @@ export default function Onboarding() {
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // form
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [linkedin, setLinkedin] = useState("");
@@ -27,6 +26,7 @@ export default function Onboarding() {
   const [salary, setSalary] = useState("");
   const [jobEmail, setJobEmail] = useState("");
   const [jobEmailPwd, setJobEmailPwd] = useState("");
+  const [useApplyagentEmail, setUseApplyagentEmail] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeName, setResumeName] = useState(null);
 
@@ -45,6 +45,7 @@ export default function Onboarding() {
       setCountries(data.target_countries || []);
       setSalary(data.preferred_salary || "");
       setJobEmail(data.job_search_email || "");
+      setUseApplyagentEmail(data.use_applyagent_email || false);
       setResumeName(data.resume_filename || null);
       if (data.onboarding_step && !data.onboarding_completed) setStep(data.onboarding_step);
     }).catch(() => {});
@@ -60,8 +61,9 @@ export default function Onboarding() {
         target_roles: roles,
         target_countries: countries,
         preferred_salary: salary || undefined,
-        job_search_email: jobEmail || undefined,
-        job_search_email_password: jobEmailPwd || undefined,
+        use_applyagent_email: useApplyagentEmail,
+        job_search_email: (!useApplyagentEmail && jobEmail) ? jobEmail : undefined,
+        job_search_email_password: (!useApplyagentEmail && jobEmailPwd) ? jobEmailPwd : undefined,
         onboarding_step: next,
         onboarding_completed: next > 8,
       });
@@ -83,7 +85,7 @@ export default function Onboarding() {
     const fd = new FormData();
     fd.append("file", resumeFile);
     try {
-      const { data } = await api.post("/resumes/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      await api.post("/resumes/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
       setResumeName(resumeFile.name);
       toast.success("Resume uploaded ✓");
       saveStep(3);
@@ -118,7 +120,6 @@ export default function Onboarding() {
       </a>
 
       <div className="relative max-w-2xl mx-auto pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6">
-        {/* Progress */}
         <div className="flex items-center gap-1 sm:gap-2 mb-5 sm:mb-7">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
@@ -229,12 +230,37 @@ export default function Onboarding() {
             )}
 
             {step === 7 && (
-              <Step title="Dedicated job-search email" sub="We recommend a separate inbox so recruiter communication stays organized. Stored encrypted, never exposed.">
-                <div className="space-y-3">
-                  <Field label="Job search email" type="email" value={jobEmail} onChange={setJobEmail} required testid="onb-jobemail" />
-                  <Field label="Email password" type="password" value={jobEmailPwd} onChange={setJobEmailPwd} testid="onb-jobemail-pwd" placeholder={profile.job_search_email ? "Saved · type to update" : ""} />
+              <Step title="Dedicated job-search email" sub="We recommend a separate inbox so recruiter communication stays organized. Stored encrypted, never shared.">
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={() => setUseApplyagentEmail(!useApplyagentEmail)}
+                    className={`w-full flex items-start gap-3 p-4 rounded-2xl border-2 transition-all text-left ${useApplyagentEmail ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 bg-white/80 text-zinc-700 hover:border-zinc-400"}`}
+                    data-testid="onb-use-applyagent-email"
+                  >
+                    <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${useApplyagentEmail ? "border-white bg-white" : "border-zinc-300"}`}>
+                      {useApplyagentEmail && <CheckCircle2 className="w-3 h-3 text-zinc-900" />}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Create a new ApplyAgent email for me
+                      </div>
+                      <div className={`text-xs mt-1 leading-relaxed ${useApplyagentEmail ? "text-white/70" : "text-zinc-400"}`}>
+                        Don't want to share your personal inbox? We'll assign you a dedicated job-search email.
+                        Your email ID and password will be visible in your dashboard after your first batch of applications.
+                      </div>
+                    </div>
+                  </button>
+
+                  {!useApplyagentEmail && (
+                    <div className="space-y-3">
+                      <Field label="Job search email" type="email" value={jobEmail} onChange={setJobEmail} required testid="onb-jobemail" />
+                      <Field label="Email password" type="password" value={jobEmailPwd} onChange={setJobEmailPwd} testid="onb-jobemail-pwd" placeholder={profile.job_search_email ? "Saved · type to update" : ""} />
+                    </div>
+                  )}
                 </div>
-                <Footer onBack={() => setStep(6)} onNext={() => saveStep(8)} saving={saving} disabled={!jobEmail} />
+                <Footer onBack={() => setStep(6)} onNext={() => saveStep(8)} saving={saving} disabled={!useApplyagentEmail && !jobEmail && !profile.job_search_email} />
               </Step>
             )}
 
