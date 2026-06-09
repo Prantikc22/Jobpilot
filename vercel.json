@@ -8,7 +8,6 @@
         "backend": {
             "root": "backend",
             "routePrefix": "/_/backend",
-            "framework": "other",
             "installCommand": "pip install -r requirements.txt"
         }
     }
