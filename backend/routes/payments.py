@@ -96,22 +96,35 @@ async def verify_route(body: Verify, user=Depends(get_current_user), db=Depends(
     ok = verify_signature(body.razorpay_order_id, body.razorpay_payment_id, body.razorpay_signature)
     if not ok:
         raise HTTPException(status_code=400, detail="Invalid signature")
-    await db.orders.update_one(
-        {"razorpay_order_id": body.razorpay_order_id},
-        {"$set": {"status": "paid", "razorpay_payment_id": body.razorpay_payment_id, "paid_at": datetime.now(timezone.utc).isoformat()}},
-    )
-    await db.users.update_one(
-        {"supabase_user_id": user["id"]},
-        {
-            "$set": {
-                "plan": body.plan,
-                "subscription_started_at": datetime.now(timezone.utc).isoformat(),
-                "subscription_active_until": (datetime.now(timezone.utc) + timedelta(days=PLAN_DAYS)).isoformat(),
-                "applications_count": 0,  # reset monthly quota
-            }
-        },
-        upsert=True,
-    )
+    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        await db.orders.update_one(
+            {"razorpay_order_id": body.razorpay_order_id},
+            {"$set": {
+                "status": "paid",
+                "razorpay_payment_id": body.razorpay_payment_id,
+                "paid_at": now_iso,
+                "updated_at": now_iso,
+            }},
+        )
+    except Exception as e:
+        logger.warning(f"[verify] orders update failed (payment still valid): {e}")
+    try:
+        await db.users.update_one(
+            {"supabase_user_id": user["id"]},
+            {
+                "$set": {
+                    "plan": body.plan,
+                    "subscription_started_at": now_iso,
+                    "subscription_active_until": (datetime.now(timezone.utc) + timedelta(days=PLAN_DAYS)).isoformat(),
+                    "applications_count": 0,
+                }
+            },
+            upsert=True,
+        )
+    except Exception as e:
+        logger.error(f"[verify] users plan update failed: {e}")
+        raise HTTPException(status_code=500, detail="Payment recorded but profile update failed. Contact support with your payment ID.")
     return {"ok": True, "plan": body.plan}
 
 
