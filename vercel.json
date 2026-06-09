@@ -10,8 +10,7 @@
         "backend": {
             "root": "backend",
             "routePrefix": "/_/backend",
-            "entrypoint": "server.py",
-            "installCommand": "pip install -r requirements.txt"
+            "entrypoint": "server.py"
         }
     }
 }
