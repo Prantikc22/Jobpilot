@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { supabase } from "../lib/supabase";
 import { api } from "../lib/api";
-import { AuthShell, Field } from "./SignIn";
+import { AuthShell, Field, GoogleButton, Divider } from "./SignIn";
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -62,8 +62,17 @@ export default function SignUp() {
     }
   };
 
+  const signUpGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  };
+
   return (
     <AuthShell title="Create your pilot" subtitle="60 seconds. No credit card required." testid="signup-page">
+      <GoogleButton onClick={signUpGoogle} label="Sign up with Google" />
+      <Divider />
       <form onSubmit={onSubmit} className="space-y-3" data-testid="signup-form">
         <Field label="Full name" value={fullName} onChange={setFullName} required testid="signup-name" />
         <Field label="Work email" type="email" value={email} onChange={setEmail} required testid="signup-email" />

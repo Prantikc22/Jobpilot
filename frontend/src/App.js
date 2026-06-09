@@ -12,6 +12,7 @@ const Onboarding = lazy(() => import("@/pages/Onboarding"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const PricingCheckout = lazy(() => import("@/pages/PricingCheckout"));
 const PaymentSuccess = lazy(() => import("@/pages/PaymentSuccess"));
+const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const SharePage = lazy(() => import("@/pages/SharePage"));
@@ -48,6 +49,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/pricing-checkout" element={<PricingCheckout />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/share/:token" element={<SharePage />} />
