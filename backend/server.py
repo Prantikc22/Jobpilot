@@ -18,7 +18,7 @@ from db import get_db, close as close_db, ping as db_ping
 from services.supabase_service import ensure_bucket
 from routes.users import router as users_router
 from routes.resumes import router as resumes_router
-from routes.jobs import router as jobs_router, autopilot_tick
+from routes.jobs import router as jobs_router
 from routes.payments import router as payments_router
 from routes.ai import router as ai_router
 from routes.activity import router as activity_router
@@ -107,22 +107,8 @@ async def on_startup():
     except Exception as e:
         logger.warning(f"[startup] migration failed: {e}")
 
-    # Background autopilot loop
-    import asyncio
-
-    async def _autopilot_loop():
-        await asyncio.sleep(15)  # let services warm up
-        while True:
-            try:
-                res = await autopilot_tick(get_db())
-                if res.get("submitted"):
-                    logger.info(f"[autopilot] submitted={res['submitted']} at={res['at']}")
-            except Exception as e:
-                logger.warning(f"[autopilot] tick failed: {e}")
-            await asyncio.sleep(60)
-
-    if not os.environ.get("VERCEL"):
-        app.state.autopilot_task = asyncio.create_task(_autopilot_loop())
+    # Autopilot auto-apply loop is intentionally disabled.
+    # Applications are added manually by admin only via POST /admin/users/{uid}/applications
 
 
 @app.on_event("shutdown")

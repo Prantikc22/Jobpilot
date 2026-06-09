@@ -272,9 +272,9 @@ function EmailCredsCard({ profile }) {
           <Mail className="w-3.5 h-3.5" /> Autopilot email
         </div>
         <div className="flex items-start gap-2.5">
-          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-300 mt-0.5 shrink-0" />
+          <Clock className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
           <p className="text-xs text-zinc-500 leading-relaxed">
-            Your dedicated ApplyAgent email will appear here after your first batch of applications is submitted.
+            Our team is setting up your dedicated ApplyAgent email address. It will appear here within 24 hours — no action needed from you.
           </p>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Plane, LogOut, Users, Briefcase, IndianRupee, Loader2, ShieldCheck,
   Search, FlaskConical, TrendingUp, Plus, Pencil, X, Check, ExternalLink,
-  Eye, EyeOff, Mail,
+  Eye, EyeOff, Mail, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { adminApi } from "../lib/api";
@@ -450,13 +450,27 @@ function UserDetailModal({ detail, loading, onClose, onSave, onPatchApp, onAddAp
               <button onClick={() => onSave(u.supabase_user_id, edits)} className="jp-btn-primary px-4 py-2 rounded-full text-sm" data-testid="admin-save-user">Save changes</button>
             </div>
 
+            {/* Resume */}
+            <SectionHeading className="mt-7">Resume</SectionHeading>
+            <ResumeSection u={u} />
+
             {/* Email credentials */}
             <SectionHeading className="mt-7">Job Search Email Credentials</SectionHeading>
-            {u.use_applyagent_email && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
-                <Mail className="w-3 h-3" /> Using ApplyAgent email
+            {u.use_applyagent_email ? (
+              <div className="mt-2 p-3 rounded-xl bg-blue-50 border border-blue-100">
+                <div className="flex items-center gap-1.5 text-blue-700 text-xs font-semibold mb-1">
+                  <Mail className="w-3 h-3" /> Using ApplyAgent email
+                </div>
+                {!u.job_search_email && (
+                  <p className="text-xs text-blue-600">
+                    ⚠️ No email set yet — create an email for this user and enter the address + password below, then click "Save email creds".
+                  </p>
+                )}
+                {u.job_search_email && (
+                  <p className="text-xs text-blue-600">Email is set: <span className="font-mono font-semibold">{u.job_search_email}</span>. Update below if needed.</p>
+                )}
               </div>
-            )}
+            ) : null}
             <div className="grid sm:grid-cols-2 gap-3 mt-3">
               <AdminField label="Job search email" value={get("job_search_email")} onChange={(v) => set("job_search_email", v)} testid="admin-edit-job-email" />
               <label className="block">
@@ -613,6 +627,45 @@ function UserDetailModal({ detail, loading, onClose, onSave, onPatchApp, onAddAp
           </div>
         )}
       </motion.div>
+    </div>
+  );
+}
+
+function ResumeSection({ u }) {
+  const [loading, setLoading] = useState(false);
+
+  const viewResume = async () => {
+    setLoading(true);
+    try {
+      const { data } = await adminApi.get(`/admin/users/${u.supabase_user_id}/resume-url`);
+      window.open(data.signed_url, "_blank");
+    } catch {
+      toast.error("Could not load resume — user may not have uploaded one yet");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!u.resume_filename) {
+    return <p className="text-sm text-zinc-400 mt-2">No resume uploaded yet.</p>;
+  }
+
+  return (
+    <div className="mt-3 flex items-center gap-3 p-3 rounded-xl border border-zinc-100 bg-zinc-50">
+      <FileText className="w-5 h-5 text-zinc-400 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-zinc-900 truncate">{u.resume_filename}</div>
+        <div className="text-xs text-zinc-400 mt-0.5">Uploaded by user</div>
+      </div>
+      <button
+        onClick={viewResume}
+        disabled={loading}
+        className="shrink-0 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full jp-btn-primary"
+        data-testid="admin-view-resume"
+      >
+        {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5" />}
+        View
+      </button>
     </div>
   );
 }

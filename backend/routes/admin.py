@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from auth_deps import get_current_admin, create_admin_token
 from db import get_db
+from services.supabase_service import get_signed_url
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -174,7 +175,31 @@ async def add_application(
         "job_id": None,
     }
     await db.applications.insert_one(doc)
+    # Increment the user's applications_count so their dashboard reflects the new total
+    await db.users.update_one(
+        {"supabase_user_id": supabase_user_id},
+        {
+            "$inc": {"applications_count": 1},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()},
+        },
+    )
     return {"ok": True, "id": doc["id"]}
+
+
+@router.get("/users/{supabase_user_id}/resume-url")
+async def get_user_resume_url(
+    supabase_user_id: str,
+    admin=Depends(get_current_admin),
+    db=Depends(get_db),
+):
+    user = await db.users.find_one({"supabase_user_id": supabase_user_id})
+    if not user or not user.get("resume_path"):
+        raise HTTPException(status_code=404, detail="No resume on file for this user")
+    try:
+        url = get_signed_url(user["resume_path"], 3600)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not generate URL: {e}")
+    return {"signed_url": url, "filename": user.get("resume_filename", "resume")}
 
 
 @router.get("/webhook-events")
