@@ -62,7 +62,7 @@ export default function PricingCheckout() {
               }
             } catch {}
             toast.success(`${planId.toUpperCase()} activated!`);
-            setTimeout(() => nav("/dashboard"), 800);
+            setTimeout(() => nav("/payment-success", { state: { plan: planId } }), 400);
           } catch (e) {
             toast.error("Payment verify failed");
           }
