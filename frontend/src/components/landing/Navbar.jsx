@@ -73,7 +73,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/signup"
-                className="text-sm px-4 py-2 rounded-full jp-btn-primary"
+                className="text-sm px-4 py-2 rounded-full jp-btn-primary whitespace-nowrap"
                 data-testid="nav-get-started"
               >
                 {t("nav.start")}

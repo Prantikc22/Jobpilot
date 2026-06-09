@@ -222,12 +222,12 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="mt-7 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3"
           >
-            <Link to="/signup" className="jp-btn-primary inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium" data-testid="hero-cta-primary">
+            <Link to="/signup" className="jp-btn-primary inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium whitespace-nowrap" data-testid="hero-cta-primary">
               {t("hero.primary")}
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-4 h-4 shrink-0" />
             </Link>
-            <a href="#story" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100/70 transition-colors" data-testid="hero-cta-secondary">
-              <PlayCircle className="w-4 h-4" />
+            <a href="#story" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100/70 transition-colors whitespace-nowrap" data-testid="hero-cta-secondary">
+              <PlayCircle className="w-4 h-4 shrink-0" />
               {t("hero.secondary")}
             </a>
           </motion.div>
@@ -258,11 +258,11 @@ export default function Hero() {
             <div className="text-[11px] uppercase tracking-[0.22em] text-zinc-400 font-semibold mb-3">
               {t("hero.trustline")}
             </div>
-            <div className="flex flex-wrap items-center gap-x-5 sm:gap-x-6 gap-y-3">
+            <div className="flex items-center gap-x-4 sm:gap-x-6 overflow-x-auto pb-0.5 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {Object.entries(BRAND_MARKS).map(([name, mark]) => (
-                <div key={name} className="flex items-center gap-2 text-zinc-700 hover:text-zinc-900 transition-colors" title={name}>
-                  {mark}
-                  <span className="text-sm font-semibold tracking-tight">{name}</span>
+                <div key={name} className="flex items-center gap-1.5 text-zinc-700 hover:text-zinc-900 transition-colors shrink-0" title={name}>
+                  <span className="[&>svg]:w-4 [&>svg]:h-4 sm:[&>svg]:w-5 sm:[&>svg]:h-5">{mark}</span>
+                  <span className="text-[12px] sm:text-sm font-semibold tracking-tight whitespace-nowrap">{name}</span>
                 </div>
               ))}
             </div>
