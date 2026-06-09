@@ -16,6 +16,7 @@ from services.razorpay_service import (
     verify_subscription_signature,
     fetch_subscription,
     cancel_subscription,
+    get_key_id,
 )
 
 logger = logging.getLogger("payments")
@@ -47,23 +48,37 @@ async def create_order_route(body: CreateOrder, user=Depends(get_current_user), 
         raise HTTPException(status_code=400, detail="Invalid plan")
     amount = PLAN_PRICES[body.plan]
     receipt = f"jp_{user['id'][:8]}_{int(datetime.now(timezone.utc).timestamp())}"
-    order = create_order(amount, receipt, notes={"supabase_user_id": user["id"], "plan": body.plan})
-    await db.orders.insert_one(
-        {
-            "razorpay_order_id": order["id"],
-            "supabase_user_id": user["id"],
-            "plan": body.plan,
-            "amount": amount,
-            "currency": "INR",
-            "status": "created",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }
-    )
+    try:
+        order = create_order(amount, receipt, notes={"supabase_user_id": user["id"], "plan": body.plan})
+    except RuntimeError as e:
+        logger.error(f"[create-order] config error: {e}")
+        raise HTTPException(status_code=503, detail="Payment service not configured. Contact support.")
+    except Exception as e:
+        logger.error(f"[create-order] Razorpay error: {e}")
+        raise HTTPException(status_code=502, detail=f"Payment gateway error: {e}")
+    try:
+        await db.orders.insert_one(
+            {
+                "razorpay_order_id": order["id"],
+                "supabase_user_id": user["id"],
+                "plan": body.plan,
+                "amount": amount,
+                "currency": "INR",
+                "status": "created",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+    except Exception as e:
+        logger.warning(f"[create-order] DB insert failed (order still valid): {e}")
+    try:
+        key_id = get_key_id()
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail="Payment service not configured. Contact support.")
     return {
         "order_id": order["id"],
         "amount": amount,
         "currency": "INR",
-        "key_id": os.environ["RAZORPAY_KEY_ID"],
+        "key_id": key_id,
     }
 
 
@@ -291,7 +306,7 @@ async def create_subscription_route(body: CreateSubscription, user=Depends(get_c
     return {
         "subscription_id": sub["id"],
         "short_url": sub.get("short_url"),
-        "key_id": os.environ["RAZORPAY_KEY_ID"],
+        "key_id": get_key_id(),
         "plan": body.plan,
     }
 
