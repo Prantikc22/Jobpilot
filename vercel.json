@@ -1,11 +1,16 @@
 {
     "experimentalServices": {
         "frontend": {
+            "framework": "create-react-app",
+            "root": "frontend",
             "routePrefix": "/"
         },
         "backend": {
             "root": "backend",
-            "routePrefix": "/_/backend"
+            "routePrefix": "/_/backend",
+            "framework": "other",
+            "installCommand": "pip install -r requirements.txt",
+            "buildCommand": ""
         }
     }
 }
