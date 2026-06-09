@@ -1,9 +1,11 @@
 """Admin routes - separate JWT auth."""
 import os
+import io
+import csv
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from auth_deps import get_current_admin, create_admin_token
@@ -184,6 +186,149 @@ async def add_application(
         },
     )
     return {"ok": True, "id": doc["id"]}
+
+
+def _parse_bulk_file(content: bytes, filename: str) -> list[dict]:
+    """Parse .xlsx or .csv file into a list of application dicts."""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+    # Normalise a header string to a simple key
+    def _norm(h: str) -> str:
+        return h.strip().lower().replace(" ", "_").replace("-", "_")
+
+    COL_ALIASES = {
+        "company": ["company", "company_name", "employer", "organization"],
+        "role": ["role", "job_title", "title", "position", "job_role", "job_name"],
+        "platform": ["platform", "source", "job_board", "site", "website"],
+        "job_url": ["job_url", "url", "link", "job_link", "apply_url"],
+        "status": ["status", "application_status", "state"],
+    }
+
+    def _map_headers(headers: list[str]) -> dict[str, int]:
+        """Return {field: col_index} for whatever columns we can recognise."""
+        mapping = {}
+        normed = [_norm(h) for h in headers]
+        for field, aliases in COL_ALIASES.items():
+            for alias in aliases:
+                if alias in normed:
+                    mapping[field] = normed.index(alias)
+                    break
+        return mapping
+
+    rows = []
+
+    if ext in ("xlsx", "xls"):
+        import openpyxl
+        wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+        ws = wb.active
+        all_rows = list(ws.iter_rows(values_only=True))
+        if not all_rows:
+            return []
+        headers = [str(c) if c is not None else "" for c in all_rows[0]]
+        col_map = _map_headers(headers)
+        if "company" not in col_map or "role" not in col_map:
+            raise ValueError("Excel must have at least 'Company' and 'Role' columns")
+        for row in all_rows[1:]:
+            company = str(row[col_map["company"]] or "").strip()
+            role = str(row[col_map["role"]] or "").strip()
+            if not company or not role:
+                continue
+            rows.append({
+                "company": company,
+                "role": role,
+                "platform": str(row[col_map["platform"]] or "").strip() if "platform" in col_map else "Manual",
+                "job_url": str(row[col_map["job_url"]] or "").strip() if "job_url" in col_map else None,
+                "status": str(row[col_map["status"]] or "").strip() if "status" in col_map else "submitted",
+            })
+
+    elif ext == "csv":
+        text = content.decode("utf-8-sig", errors="replace")
+        reader = csv.reader(io.StringIO(text))
+        all_rows = list(reader)
+        if not all_rows:
+            return []
+        headers = all_rows[0]
+        col_map = _map_headers(headers)
+        if "company" not in col_map or "role" not in col_map:
+            raise ValueError("CSV must have at least 'Company' and 'Role' columns")
+        for row in all_rows[1:]:
+            if len(row) <= max(col_map["company"], col_map["role"]):
+                continue
+            company = row[col_map["company"]].strip()
+            role = row[col_map["role"]].strip()
+            if not company or not role:
+                continue
+            rows.append({
+                "company": company,
+                "role": role,
+                "platform": row[col_map["platform"]].strip() if "platform" in col_map and len(row) > col_map["platform"] else "Manual",
+                "job_url": row[col_map["job_url"]].strip() or None if "job_url" in col_map and len(row) > col_map["job_url"] else None,
+                "status": row[col_map["status"]].strip() if "status" in col_map and len(row) > col_map["status"] else "submitted",
+            })
+    else:
+        raise ValueError("Only .xlsx or .csv files are supported")
+
+    return rows
+
+
+@router.post("/users/{supabase_user_id}/applications/bulk")
+async def bulk_add_applications(
+    supabase_user_id: str,
+    file: UploadFile = File(...),
+    admin=Depends(get_current_admin),
+    db=Depends(get_db),
+):
+    """Upload an Excel (.xlsx) or CSV file and bulk-insert applications for a user."""
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 5 MB)")
+
+    try:
+        parsed_rows = _parse_bulk_file(content, file.filename or "upload.xlsx")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not parse file: {e}")
+
+    if not parsed_rows:
+        raise HTTPException(status_code=400, detail="No valid rows found (need Company + Role columns)")
+
+    now = datetime.now(timezone.utc).isoformat()
+    added = 0
+    skipped = 0
+    for row in parsed_rows:
+        status_val = row.get("status") or "submitted"
+        if not status_val or status_val.lower() in ("", "none", "null"):
+            status_val = "submitted"
+        doc = {
+            "id": str(uuid.uuid4()),
+            "supabase_user_id": supabase_user_id,
+            "company": row["company"],
+            "role": row["role"],
+            "platform": row.get("platform") or "Manual",
+            "job_url": row.get("job_url") or None,
+            "status": status_val,
+            "submitted_by": "admin",
+            "submitted_at": now,
+            "match_score": None,
+            "job_id": None,
+        }
+        try:
+            await db.applications.insert_one(doc)
+            added += 1
+        except Exception:
+            skipped += 1
+
+    if added > 0:
+        await db.users.update_one(
+            {"supabase_user_id": supabase_user_id},
+            {
+                "$inc": {"applications_count": added},
+                "$set": {"updated_at": now},
+            },
+        )
+
+    return {"ok": True, "added": added, "skipped": skipped, "total_rows": len(parsed_rows)}
 
 
 @router.get("/users/{supabase_user_id}/resume-url")

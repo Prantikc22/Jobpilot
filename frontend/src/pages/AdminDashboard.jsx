@@ -291,6 +291,7 @@ export default function AdminDashboard() {
             onSave={saveUserPatch}
             onPatchApp={patchApp}
             onAddApp={addApp}
+            onReloadDetail={reloadDetail}
           />
         )}
       </div>
@@ -374,7 +375,7 @@ function GlobalAppsPanel({ apps, users, onPatchApp }) {
   );
 }
 
-function UserDetailModal({ detail, loading, onClose, onSave, onPatchApp, onAddApp }) {
+function UserDetailModal({ detail, loading, onClose, onSave, onPatchApp, onAddApp, onReloadDetail }) {
   const u = detail?.user;
   const [edits, setEdits] = useState({});
   const [showPwd, setShowPwd] = useState(false);
@@ -382,6 +383,28 @@ function UserDetailModal({ detail, loading, onClose, onSave, onPatchApp, onAddAp
   const [editAppVals, setEditAppVals] = useState({});
   const [showAddApp, setShowAddApp] = useState(false);
   const [newApp, setNewApp] = useState({ company: "", role: "", platform: "Manual", job_url: "", status: "submitted" });
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const bulkInputRef = useState(() => ({ current: null }))[0];
+
+  const handleBulkUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBulkUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const { data } = await adminApi.post(`/admin/users/${u.supabase_user_id}/applications/bulk`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(`Added ${data.added} application${data.added !== 1 ? "s" : ""}${data.skipped ? ` · ${data.skipped} skipped` : ""}`);
+      if (onReloadDetail) await onReloadDetail(u.supabase_user_id);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Upload failed");
+    } finally {
+      setBulkUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const get = (field, fallback = "") => (edits[field] !== undefined ? edits[field] : (u?.[field] ?? fallback));
   const set = (field, value) => setEdits((prev) => ({ ...prev, [field]: value }));
@@ -532,15 +555,31 @@ function UserDetailModal({ detail, loading, onClose, onSave, onPatchApp, onAddAp
 
             {/* Applications */}
             <div className="mt-7">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <SectionHeading>Applications ({detail.applications?.length || 0})</SectionHeading>
-                <button
-                  onClick={() => setShowAddApp(!showAddApp)}
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full jp-btn-primary"
-                  data-testid="admin-add-app-toggle"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Add application
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* Bulk Excel / CSV upload */}
+                  <label className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-zinc-200 bg-white hover:border-zinc-400 text-zinc-600 cursor-pointer transition-colors" title="Upload Excel or CSV">
+                    {bulkUploading
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <FileText className="w-3.5 h-3.5" />}
+                    {bulkUploading ? "Uploading…" : "Upload Excel / CSV"}
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      onChange={handleBulkUpload}
+                      disabled={bulkUploading}
+                    />
+                  </label>
+                  <button
+                    onClick={() => setShowAddApp(!showAddApp)}
+                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full jp-btn-primary"
+                    data-testid="admin-add-app-toggle"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add one
+                  </button>
+                </div>
               </div>
 
               {showAddApp && (
