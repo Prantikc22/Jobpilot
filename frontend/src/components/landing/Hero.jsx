@@ -133,6 +133,7 @@ function useTickingMetric(values, intervalMs = 6000, startDelayMs = 2200) {
       clearTimeout(startT);
       if (intervalId) clearInterval(intervalId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return values[i];
 }

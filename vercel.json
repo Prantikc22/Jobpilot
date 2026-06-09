@@ -4,7 +4,8 @@
             "framework": "create-react-app",
             "root": "frontend",
             "routePrefix": "/",
-            "installCommand": "yarn install"
+            "installCommand": "yarn install",
+            "buildCommand": "CI=false yarn run build"
         },
         "backend": {
             "root": "backend",

@@ -28,7 +28,7 @@ export default function Dashboard() {
     refresh();
     const t = setInterval(refresh, 30_000); // live-poll every 30s
     return () => clearInterval(t);
-  }, [user, authLoading]);
+  }, [user, authLoading, nav]);
 
   async function refresh() {
     try {
