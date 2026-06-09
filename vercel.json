@@ -4,7 +4,7 @@
             "framework": "create-react-app",
             "root": "frontend",
             "routePrefix": "/",
-            "installCommand": "npm install --legacy-peer-deps --no-audit --no-fund && npm install ajv@^8 --legacy-peer-deps --no-audit"
+            "installCommand": "npm install --legacy-peer-deps --no-audit --no-fund"
         },
         "backend": {
             "root": "backend",
