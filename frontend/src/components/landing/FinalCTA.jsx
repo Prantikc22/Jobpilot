@@ -50,11 +50,10 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="font-display mt-7 text-[2.6rem] sm:text-6xl md:text-7xl lg:text-[5.6rem] leading-[0.98] tracking-[-0.035em] font-medium"
+          className="font-display mt-7 text-[1.85rem] sm:text-6xl md:text-7xl lg:text-[5.6rem] leading-[1.05] sm:leading-[0.98] tracking-[-0.03em] sm:tracking-[-0.035em] font-medium"
         >
-          {t("finalCta.title1")}{" "}
-          <span className="jp-gradient-text">{t("finalCta.title2")}</span>
-          <br /> {t("finalCta.title3")}
+          {t("finalCta.title1")}{" "}<span className="jp-gradient-text">{t("finalCta.title2")}</span>
+          <br />{t("finalCta.title3")}
         </motion.h2>
 
         <motion.p
@@ -72,19 +71,19 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.45 }}
-          className="mt-10 flex flex-wrap items-center justify-center gap-3"
+          className="mt-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3"
         >
           <Link
             to="/signup"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-[15px] font-medium bg-white text-zinc-900 hover:bg-zinc-100 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-[15px] font-medium bg-white text-zinc-900 hover:bg-zinc-100 transition-all whitespace-nowrap"
             data-testid="final-cta-primary"
           >
             {t("finalCta.primary")}
-            <ArrowUpRight className="w-4 h-4" />
+            <ArrowUpRight className="w-4 h-4 shrink-0" />
           </Link>
           <Link
             to="/signin"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-[15px] font-medium border border-white/20 text-white hover:bg-white/5 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-[15px] font-medium border border-white/20 text-white hover:bg-white/5 transition-all whitespace-nowrap"
             data-testid="final-cta-secondary"
           >
             {t("finalCta.secondary")}

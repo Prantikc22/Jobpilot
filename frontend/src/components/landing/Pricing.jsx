@@ -71,7 +71,7 @@ export default function Pricing() {
         "Priority processing & faster submission",
         "Career Shield — automatic low-fit pause",
         "LinkedIn optimizer + ATS check unlimited",
-        "1:1 onboarding session",
+        "10 direct intros to founders & decision makers/month",
       ],
       cta: t("pricing.pro.cta"),
       highlight: true,

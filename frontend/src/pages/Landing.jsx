@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import Navbar from "../components/landing/Navbar";
 import Hero from "../components/landing/Hero";
 
+const TextReveal = lazy(() => import("../components/landing/TextReveal"));
 const ScrollStory = lazy(() => import("../components/landing/ScrollStory"));
 const BentoFeatures = lazy(() => import("../components/landing/BentoFeatures"));
 const ActivityFeed = lazy(() => import("../components/landing/ActivityFeed"));
@@ -19,6 +20,7 @@ export default function Landing() {
       <main>
         <Hero />
         <Suspense fallback={<Skeleton />}>
+          <TextReveal />
           <ScrollStory />
           <BentoFeatures />
           <ActivityFeed />

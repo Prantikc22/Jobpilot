@@ -201,20 +201,21 @@ export default function Hero() {
             transition={{ duration: 0.7, delay: 0.32 }}
             className="mt-5 sm:mt-6 text-[15px] sm:text-base lg:text-[17px] text-zinc-500 max-w-xl leading-relaxed"
           >
-            {t("hero.sub")}
+            We search LinkedIn, Indeed, Workday, Greenhouse, and hundreds of company career pages to find opportunities matched to your skills, experience, location, and salary expectations —{" "}
+            <span className="font-semibold text-zinc-800 italic">while you sleep, we find you jobs.</span>
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-7 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3"
+            className="mt-7 flex flex-col items-start sm:flex-row sm:flex-wrap sm:items-center gap-3"
           >
-            <Link to="/signup" className="jp-btn-primary inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium whitespace-nowrap" data-testid="hero-cta-primary">
+            <Link to="/signup" className="jp-btn-primary inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium whitespace-nowrap" data-testid="hero-cta-primary">
               {t("hero.primary")}
               <ArrowUpRight className="w-4 h-4 shrink-0" />
             </Link>
-            <a href="#story" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100/70 transition-colors whitespace-nowrap" data-testid="hero-cta-secondary">
+            <a href="#story" className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100/70 transition-colors whitespace-nowrap" data-testid="hero-cta-secondary">
               <PlayCircle className="w-4 h-4 shrink-0" />
               {t("hero.secondary")}
             </a>

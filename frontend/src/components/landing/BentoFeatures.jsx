@@ -94,7 +94,7 @@ function CenterpieceAuto() {
       initial={{ opacity: 0, y: 24 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.7 }}
-      className="relative col-span-1 md:col-span-8 md:row-span-2 rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-950 to-zinc-800 text-white p-7 md:p-10"
+      className="relative col-span-1 md:col-span-8 md:row-span-2 rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-950 to-zinc-800 text-white p-7 md:p-10 min-h-[340px] md:min-h-0"
       data-testid="feature-auto-apply"
     >
       <div className="absolute -top-32 -right-20 w-[500px] h-[500px] rounded-full bg-blue-500/20 blur-[100px]" />
