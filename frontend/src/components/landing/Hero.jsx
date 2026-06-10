@@ -169,7 +169,7 @@ export default function Hero() {
       <div className="jp-mesh" aria-hidden />
       <div className="absolute inset-0 jp-dot-grid opacity-30 pointer-events-none" aria-hidden />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-6 md:px-8 grid lg:grid-cols-[1fr_1.05fr] gap-10 lg:gap-10 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 md:px-10 grid lg:grid-cols-[1fr_1.05fr] gap-10 lg:gap-10 items-center">
         {/* Left: Copy */}
         <div className="relative">
           <motion.div
