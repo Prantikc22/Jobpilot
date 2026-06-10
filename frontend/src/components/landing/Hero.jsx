@@ -22,7 +22,6 @@ const BRAND_MARKS = {
   ),
 };
 
-// 6 platforms placed AT a single orbital radius using polar coords.
 const ORBIT_RADIUS_VW = 240;
 const PLATFORMS = [
   { name: "LinkedIn",   color: "#0A66C2", deg:  -60, matches: 12 },
@@ -45,11 +44,7 @@ function PlatformChip({ p, index, mx, my }) {
   const py = useTransform(my, (v) => y - v * 0.03 * sign);
 
   return (
-    // Outer wrapper handles centering on parent center via top/left + Tailwind translate.
-    // Inner motion.div handles orbital offset + parallax via x/y motion values (no clash).
-    <div
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
-    >
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
       <motion.div
         style={{ x: px, y: py }}
         initial={{ opacity: 0, scale: 0.6 }}
@@ -103,7 +98,6 @@ function ConnectionLines() {
   );
 }
 
-// Eased-in count to a target on mount.
 function useEasedCounter(target, duration = 1800) {
   const [v, setV] = useState(0);
   useEffect(() => {
@@ -121,7 +115,6 @@ function useEasedCounter(target, duration = 1800) {
   return v;
 }
 
-// Slowly cycle a metric through values (visible "alive" feel).
 function useTickingMetric(values, intervalMs = 6000, startDelayMs = 2200) {
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -129,10 +122,7 @@ function useTickingMetric(values, intervalMs = 6000, startDelayMs = 2200) {
     const startT = setTimeout(() => {
       intervalId = setInterval(() => setI((x) => (x + 1) % values.length), intervalMs);
     }, startDelayMs);
-    return () => {
-      clearTimeout(startT);
-      if (intervalId) clearInterval(intervalId);
-    };
+    return () => { clearTimeout(startT); if (intervalId) clearInterval(intervalId); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return values[i];
@@ -151,12 +141,10 @@ export default function Hero() {
   const baseResponse = useEasedCounter(34);
   const baseOffers = useEasedCounter(7);
 
-  // After the initial ease, slowly tick the metrics so the dashboard feels alive.
   const appsTick = useTickingMetric([1247, 1248, 1249], 6000);
   const responseTick = useTickingMetric([34, 35, 34], 7500);
   const offersTick = useTickingMetric([7, 7, 8], 9000);
 
-  // Until the eased counter finishes, use the eased value. After (>1247), use ticker.
   const apps = baseApps >= 1247 ? appsTick : baseApps;
   const responseRate = baseResponse >= 34 ? responseTick : baseResponse;
   const offers = baseOffers >= 7 ? offersTick : baseOffers;
@@ -175,7 +163,7 @@ export default function Hero() {
     <section
       ref={containerRef}
       onMouseMove={onMove}
-      className="relative pt-28 pb-16 sm:pt-32 sm:pb-20 md:pt-40 md:pb-28 overflow-hidden"
+      className="relative pt-28 pb-12 sm:pt-32 sm:pb-16 md:pt-40 md:pb-28 overflow-hidden"
       data-testid="hero-section"
     >
       <div className="jp-mesh" aria-hidden />
@@ -248,6 +236,62 @@ export default function Hero() {
             ))}
           </motion.div>
 
+          {/* Mobile-only: compact stats card */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75, duration: 0.7 }}
+            className="lg:hidden mt-8"
+          >
+            <div className="jp-glass rounded-2xl p-4 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.15)]">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                </div>
+                <span className="font-mono text-[9px] text-zinc-400">ApplyAgent AI · Live</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] text-zinc-500">Pilot active</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: "Apps", value: apps.toLocaleString(), color: "from-blue-500 to-indigo-500" },
+                  { label: "Interviews", value: interviews, color: "from-violet-500 to-fuchsia-500" },
+                  { label: "Response", value: `${responseRate}%`, color: "from-emerald-500 to-teal-500" },
+                  { label: "Offers", value: offers, color: "from-amber-500 to-orange-500" },
+                ].map((s) => (
+                  <div key={s.label} className="bg-white/80 rounded-xl p-2 border border-zinc-100 text-center">
+                    <div className="text-[9px] uppercase tracking-[0.14em] text-zinc-400 font-semibold">{s.label}</div>
+                    <motion.div
+                      key={String(s.value)}
+                      initial={{ opacity: 0, y: 3 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35 }}
+                      className={`mt-0.5 font-display text-base bg-gradient-to-br ${s.color} bg-clip-text text-transparent font-bold`}
+                    >
+                      {s.value}
+                    </motion.div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-1.5">
+                {[
+                  { color: "#0A66C2", name: "LinkedIn" },
+                  { color: "#FF564B", name: "Wellfound" },
+                  { color: "#F38B00", name: "Workday" },
+                ].map((p) => (
+                  <div key={p.name} className="flex items-center gap-1.5 bg-white/60 rounded-lg px-2 py-1.5">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
+                    <span className="text-[10px] text-zinc-600 font-medium truncate">{p.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -258,7 +302,7 @@ export default function Hero() {
             <div className="text-[11px] uppercase tracking-[0.22em] text-zinc-400 font-semibold mb-3">
               {t("hero.trustline")}
             </div>
-            <div className="flex items-center gap-x-4 sm:gap-x-6 overflow-x-auto pb-0.5 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex items-center gap-x-4 sm:gap-x-6 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {Object.entries(BRAND_MARKS).map(([name, mark]) => (
                 <div key={name} className="flex items-center gap-1.5 text-zinc-700 hover:text-zinc-900 transition-colors shrink-0" title={name}>
                   <span className="[&>svg]:w-4 [&>svg]:h-4 sm:[&>svg]:w-5 sm:[&>svg]:h-5">{mark}</span>
@@ -269,13 +313,11 @@ export default function Hero() {
           </motion.div>
         </div>
 
-        {/* Right: Living dashboard with orbital platforms */}
-        <div className="relative w-full mx-auto" style={{ maxWidth: 620 }} data-testid="hero-dashboard-wrap">
+        {/* Right: Living dashboard with orbital platforms — desktop only */}
+        <div className="hidden lg:block relative w-full mx-auto" style={{ maxWidth: 620 }} data-testid="hero-dashboard-wrap">
           <div className="relative aspect-square">
-            {/* Soft halo behind */}
             <div className="absolute inset-10 rounded-full bg-gradient-to-br from-blue-100/35 via-violet-100/30 to-rose-100/25 blur-2xl" />
 
-            {/* Rotating orbital ring — almost invisible */}
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
@@ -291,7 +333,6 @@ export default function Hero() {
               <PlatformChip key={p.name} p={p} index={i} mx={smoothX} my={smoothY} />
             ))}
 
-            {/* Orbiting paper airplane */}
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
@@ -308,7 +349,6 @@ export default function Hero() {
               </div>
             </motion.div>
 
-            {/* Central dashboard — ~20% bigger, centered via wrapper to avoid transform clash with framer-motion */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
               <motion.div
                 initial={{ opacity: 0, y: 30, scale: 0.92 }}
@@ -318,28 +358,28 @@ export default function Hero() {
                 className="w-[240px] sm:w-[270px] md:w-[290px] jp-glass rounded-3xl p-4 sm:p-5 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.25)]"
                 data-testid="hero-dashboard-card"
               >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  </div>
+                  <span className="font-mono text-[9px] text-zinc-400">Jobpilot AI</span>
                 </div>
-                <span className="font-mono text-[9px] text-zinc-400">Jobpilot AI</span>
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">This Month</div>
-              <div className="grid grid-cols-2 gap-2">
-                <Stat label="Apps" value={apps.toLocaleString()} accent="from-blue-500 to-indigo-500" testid="stat-apps" />
-                <Stat label="Interviews" value={interviews} accent="from-violet-500 to-fuchsia-500" />
-                <Stat label="Response" value={`${responseRate}%`} accent="from-emerald-500 to-teal-500" testid="stat-response" />
-                <Stat label="Offers" value={offers} accent="from-amber-500 to-orange-500" testid="stat-offers" />
-              </div>
-              <div className="mt-2.5 pt-2.5 border-t border-zinc-200/60 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] text-zinc-500">Pilot active</span>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-semibold mb-2">This Month</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Stat label="Apps" value={apps.toLocaleString()} accent="from-blue-500 to-indigo-500" testid="stat-apps" />
+                  <Stat label="Interviews" value={interviews} accent="from-violet-500 to-fuchsia-500" />
+                  <Stat label="Response" value={`${responseRate}%`} accent="from-emerald-500 to-teal-500" testid="stat-response" />
+                  <Stat label="Offers" value={offers} accent="from-amber-500 to-orange-500" testid="stat-offers" />
                 </div>
-                <span className="font-mono text-[10px] text-zinc-600">14:32</span>
-              </div>
+                <div className="mt-2.5 pt-2.5 border-t border-zinc-200/60 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] text-zinc-500">Pilot active</span>
+                  </div>
+                  <span className="font-mono text-[10px] text-zinc-600">14:32</span>
+                </div>
               </motion.div>
             </div>
           </div>

@@ -5,12 +5,24 @@ import { Check, Sparkles, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 
+function detectCurrency() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    if (tz.startsWith("Asia/Kolkata") || tz.startsWith("Asia/Calcutta")) return "INR";
+    const locale = navigator.language || "";
+    if (locale === "en-IN") return "INR";
+    return "USD";
+  } catch {
+    return "INR";
+  }
+}
+
 export default function Pricing() {
   const { t } = useTranslation();
   const [variant, setVariant] = useState("A");
+  const [currency, setCurrency] = useState(detectCurrency);
 
   useEffect(() => {
-    // Fetch A/B variant for pricing copy and log a view
     axios
       .get(`${process.env.REACT_APP_BACKEND_URL}/api/ab/variant/pricing_copy`, { withCredentials: true })
       .then((r) => setVariant(r.data.variant || "A"))
@@ -29,11 +41,14 @@ export default function Pricing() {
   const subhead = variant === "B" ? t("pricing.subhead_b") : t("pricing.subhead_a");
   const tagline = variant === "B" ? t("pricing.tagline_b") : t("pricing.tagline_a");
 
+  const isUSD = currency === "USD";
+
   const PLANS = [
     {
       id: "starter",
       name: t("pricing.starter.name"),
-      price: "₹499",
+      priceINR: "₹499",
+      priceUSD: "$19",
       cadence: "/month",
       desc: t("pricing.starter.desc"),
       features: [
@@ -47,7 +62,8 @@ export default function Pricing() {
     {
       id: "pro",
       name: t("pricing.pro.name"),
-      price: "₹999",
+      priceINR: "₹999",
+      priceUSD: "$39",
       cadence: "/month",
       desc: t("pricing.pro.desc"),
       features: [
@@ -72,9 +88,29 @@ export default function Pricing() {
             {headline}<br /><span className="text-zinc-400">{subhead}</span>
           </h2>
           <p className="mt-5 text-zinc-500 text-lg">{tagline}</p>
+
+          {/* Currency toggle */}
+          <div className="mt-7 inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 p-1 gap-0.5">
+            <button
+              onClick={() => setCurrency("INR")}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                !isUSD ? "bg-white shadow-sm text-zinc-900 border border-zinc-200/80" : "text-zinc-500 hover:text-zinc-700"
+              }`}
+            >
+              ₹ INR
+            </button>
+            <button
+              onClick={() => setCurrency("USD")}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                isUSD ? "bg-white shadow-sm text-zinc-900 border border-zinc-200/80" : "text-zinc-500 hover:text-zinc-700"
+              }`}
+            >
+              $ USD
+            </button>
+          </div>
         </div>
 
-        <div className="mt-16 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="mt-12 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {PLANS.map((p, i) => (
             <motion.div
               key={p.id}
@@ -98,8 +134,16 @@ export default function Pricing() {
               <div className="flex items-baseline justify-between">
                 <h3 className="font-display text-2xl md:text-3xl tracking-tight">{p.name}</h3>
                 <div className="text-right">
-                  <span className="font-display text-4xl md:text-5xl font-medium">{p.price}</span>
-                  <span className={`${p.highlight ? "text-white/50" : "text-zinc-400"} text-sm ml-1`}>{p.cadence}</span>
+                  <motion.span
+                    key={`${p.id}-${currency}`}
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="font-display text-4xl md:text-5xl font-medium block"
+                  >
+                    {isUSD ? p.priceUSD : p.priceINR}
+                  </motion.span>
+                  <span className={`${p.highlight ? "text-white/50" : "text-zinc-400"} text-sm`}>{p.cadence}</span>
                 </div>
               </div>
               <p className={`mt-3 max-w-md ${p.highlight ? "text-white/60" : "text-zinc-500"}`}>{p.desc}</p>
@@ -107,7 +151,7 @@ export default function Pricing() {
               <ul className="mt-7 space-y-3">
                 {p.features.map((f) => (
                   <li key={f} className="flex items-start gap-3 text-[15px]">
-                    <Check className={`w-4 h-4 mt-1 ${p.highlight ? "text-emerald-400" : "text-emerald-600"}`} />
+                    <Check className={`w-4 h-4 mt-1 shrink-0 ${p.highlight ? "text-emerald-400" : "text-emerald-600"}`} />
                     <span className={p.highlight ? "text-white/85" : "text-zinc-700"}>{f}</span>
                   </li>
                 ))}
@@ -116,7 +160,7 @@ export default function Pricing() {
               <Link
                 to="/signup"
                 onClick={trackClick}
-                className={`mt-8 inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium ${
+                className={`mt-8 inline-flex items-center gap-2 px-5 py-3 rounded-full text-[15px] font-medium whitespace-nowrap ${
                   p.highlight ? "bg-white text-zinc-900 hover:bg-zinc-100" : "jp-btn-primary"
                 }`}
                 data-testid={`pricing-cta-${p.id}`}

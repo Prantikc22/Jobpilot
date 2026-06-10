@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Loader2, Upload, CheckCircle2, Sparkles, Plane, Mail } from "lucide-react";
+import { ArrowRight, ArrowLeft, Loader2, Upload, CheckCircle2, Sparkles, Plane, Mail, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
@@ -16,6 +16,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState("free");
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -32,10 +33,7 @@ export default function Onboarding() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      nav("/signin");
-      return;
-    }
+    if (!user) { nav("/signin"); return; }
     api.get("/users/me").then(({ data }) => {
       setProfile(data);
       setFullName(data.full_name || user.user_metadata?.full_name || "");
@@ -69,8 +67,13 @@ export default function Onboarding() {
       });
       setStep(next);
       if (next > 8) {
-        toast.success("All set! Let's go pick a plan.");
-        nav("/pricing-checkout");
+        if (selectedPlan === "free") {
+          toast.success("Welcome! You're on the free plan. Explore your dashboard.");
+          nav("/dashboard");
+        } else {
+          toast.success("Let's set up your plan.");
+          nav("/pricing-checkout");
+        }
       }
     } catch (e) {
       toast.error("Couldn't save — try again");
@@ -265,17 +268,53 @@ export default function Onboarding() {
             )}
 
             {step === 8 && (
-              <Step title="Choose your pilot tier" sub="Start free, or get auto-apply with Starter / Pro." icon={<Sparkles className="w-5 h-5 text-amber-500" />}>
+              <Step
+                title="Choose your pilot tier"
+                sub="Start free to explore, or unlock auto-apply immediately."
+                icon={<Sparkles className="w-5 h-5 text-amber-500" />}
+              >
                 <div className="space-y-3">
-                  <PlanRow id="free" name="Free" price="₹0" desc="AI resume update + 10 matched jobs/month · no auto-apply" current={profile.plan} />
-                  <PlanRow id="starter" name="Starter" price="₹499/mo" desc="100 targeted auto-applications/mo" current={profile.plan} />
-                  <PlanRow id="pro" name="Pro" price="₹999/mo" desc="300 + Career Shield + priority" highlight current={profile.plan} />
+                  <PlanRow
+                    id="free"
+                    name="Free"
+                    price="₹0"
+                    badge="No card needed"
+                    desc="AI resume tools + 10 matched jobs/month · no auto-apply"
+                    selected={selectedPlan === "free"}
+                    onSelect={() => setSelectedPlan("free")}
+                  />
+                  <PlanRow
+                    id="starter"
+                    name="Starter"
+                    price="₹499/mo"
+                    badge="Most popular"
+                    desc="100 targeted auto-applications per month"
+                    selected={selectedPlan === "starter"}
+                    onSelect={() => setSelectedPlan("starter")}
+                  />
+                  <PlanRow
+                    id="pro"
+                    name="Pro"
+                    price="₹999/mo"
+                    badge="Best value"
+                    desc="300 apps + Career Shield + priority processing"
+                    highlight
+                    selected={selectedPlan === "pro"}
+                    onSelect={() => setSelectedPlan("pro")}
+                  />
                 </div>
+
+                <div className="mt-4 p-3 rounded-xl bg-zinc-50 border border-zinc-100 text-xs text-zinc-500">
+                  {selectedPlan === "free"
+                    ? "You'll land on your dashboard right away. Upgrade anytime from settings."
+                    : "You'll be taken to checkout. You can cancel anytime — no lock-in."}
+                </div>
+
                 <Footer
                   onBack={() => setStep(7)}
                   onNext={() => saveStep(9)}
                   saving={saving}
-                  nextLabel="Continue to checkout"
+                  nextLabel={selectedPlan === "free" ? "Start for free" : "Continue to checkout"}
                 />
               </Step>
             )}
@@ -310,7 +349,7 @@ function Footer({ onBack, onNext, saving, disabled, nextLabel = "Continue" }) {
       <button
         disabled={disabled || saving}
         onClick={onNext}
-        className="jp-btn-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium disabled:opacity-50"
+        className="jp-btn-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium disabled:opacity-50 whitespace-nowrap"
         data-testid="onb-next"
       >
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>{nextLabel} <ArrowRight className="w-4 h-4" /></>}
@@ -319,20 +358,51 @@ function Footer({ onBack, onNext, saving, disabled, nextLabel = "Continue" }) {
   );
 }
 
-function PlanRow({ id, name, price, desc, highlight, current }) {
-  const isCurrent = current === id;
+function PlanRow({ id, name, price, desc, badge, highlight, selected, onSelect }) {
   return (
-    <div className={`rounded-2xl border p-4 flex items-center justify-between ${highlight ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 bg-white"}`}>
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="font-semibold">{name}</span>
-          {isCurrent && <span className="text-[10px] uppercase tracking-[0.16em] bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">Current</span>}
+    <button
+      type="button"
+      onClick={onSelect}
+      data-testid={`onb-plan-${id}`}
+      className={`w-full text-left rounded-2xl border-2 p-4 transition-all focus:outline-none ${
+        selected
+          ? highlight
+            ? "border-zinc-900 bg-zinc-900 text-white shadow-lg"
+            : "border-zinc-900 bg-white shadow-md"
+          : highlight
+            ? "border-zinc-200 bg-white/60 text-zinc-800 hover:border-zinc-400"
+            : "border-zinc-200 bg-white hover:border-zinc-400"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+            selected
+              ? "border-current bg-current"
+              : "border-zinc-300"
+          }`}>
+            {selected && <Check className={`w-3 h-3 ${highlight && selected ? "text-zinc-900" : "text-white"}`} strokeWidth={3} />}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold">{name}</span>
+              {badge && (
+                <span className={`text-[10px] uppercase tracking-[0.14em] rounded-full px-2 py-0.5 font-semibold ${
+                  selected && highlight
+                    ? "bg-amber-400 text-zinc-900"
+                    : selected
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-zinc-100 text-zinc-500"
+                }`}>
+                  {badge}
+                </span>
+              )}
+            </div>
+            <div className={`text-xs mt-0.5 leading-relaxed ${selected && highlight ? "text-white/70" : "text-zinc-500"}`}>{desc}</div>
+          </div>
         </div>
-        <div className={`text-xs mt-0.5 ${highlight ? "text-white/70" : "text-zinc-500"}`}>{desc}</div>
+        <div className={`font-display text-xl font-medium shrink-0 ${selected && highlight ? "text-white" : "text-zinc-900"}`}>{price}</div>
       </div>
-      <div className="text-right">
-        <div className={`font-display text-xl font-medium ${highlight ? "" : "text-zinc-900"}`}>{price}</div>
-      </div>
-    </div>
+    </button>
   );
 }
