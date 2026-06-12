@@ -72,7 +72,7 @@ async def create_order_route(body: CreateOrder, user=Depends(get_current_user), 
         logger.warning(f"[create-order] DB insert failed (order still valid): {e}")
     try:
         key_id = get_key_id()
-    except RuntimeError as e:
+    except RuntimeError:
         raise HTTPException(status_code=503, detail="Payment service not configured. Contact support.")
     return {
         "order_id": order["id"],
@@ -136,21 +136,37 @@ async def webhook(request: Request, x_razorpay_signature: str = Header(None), db
     Configure in Razorpay dashboard: webhook URL = {host}/api/payments/webhook
     Events: payment.captured, payment.failed, subscription.charged, subscription.cancelled
     Set RAZORPAY_WEBHOOK_SECRET env var to enable signature verification.
+
+    Hardening: This handler is defensive — any internal DB/logic failure is
+    logged and swallowed so we always return 2xx to Razorpay. Razorpay
+    auto-disables a webhook after repeated 5xx responses, so we must never
+    bubble exceptions out unless the request is genuinely malformed
+    (bad signature / bad JSON, which are 4xx and won't trigger disable).
     """
     raw_body = await request.body()
 
-    # Verify signature (only if webhook secret is configured)
+    # ----- 1. Signature verification (legitimate Razorpay traffic only) -----
     if RAZORPAY_WEBHOOK_SECRET:
         if not x_razorpay_signature:
+            logger.warning("[webhook] missing X-Razorpay-Signature header")
             raise HTTPException(status_code=400, detail="Missing webhook signature")
-        expected = hmac.new(
-            RAZORPAY_WEBHOOK_SECRET.encode("utf-8"),
-            raw_body,
-            hashlib.sha256,
-        ).hexdigest()
-        if not hmac.compare_digest(expected, x_razorpay_signature):
-            raise HTTPException(status_code=401, detail="Invalid webhook signature")
+        try:
+            expected = hmac.new(
+                RAZORPAY_WEBHOOK_SECRET.encode("utf-8"),
+                raw_body,
+                hashlib.sha256,
+            ).hexdigest()
+            if not hmac.compare_digest(expected, x_razorpay_signature):
+                logger.warning("[webhook] invalid signature")
+                raise HTTPException(status_code=401, detail="Invalid webhook signature")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"[webhook] signature verification crashed: {e}")
+            # Don't 500 — return 200 so Razorpay doesn't disable us
+            return {"ok": True, "ignored": True, "reason": "signature verify error"}
 
+    # ----- 2. Parse JSON -----
     try:
         import json
         payload = json.loads(raw_body.decode("utf-8"))
@@ -162,115 +178,174 @@ async def webhook(request: Request, x_razorpay_signature: str = Header(None), db
     entity = (payload.get("payload", {}).get("payment", {}) or {}).get("entity") or \
              (payload.get("payload", {}).get("subscription", {}) or {}).get("entity") or {}
 
-    # Idempotency: Razorpay can redeliver the same webhook up to 24 times. Skip if we've already processed.
-    if raw_event_id:
-        existing = await db.webhook_events.find_one({"raw_event_id": raw_event_id, "processed": True})
-        if existing:
-            return {"ok": True, "duplicate": True, "raw_event_id": raw_event_id}
-
-    # Always log the webhook event for admin observability
-    await db.webhook_events.insert_one(
-        {
-            "event": event,
-            "raw_event_id": raw_event_id,
-            "entity_id": entity.get("id"),
-            "received_at": datetime.now(timezone.utc).isoformat(),
-            "processed": False,
-            "summary": {
-                "amount": entity.get("amount"),
-                "status": entity.get("status"),
-                "notes": entity.get("notes", {}),
-            },
-        }
-    )
-
-    if event == "payment.captured":
-        notes = entity.get("notes") or {}
-        supabase_user_id = notes.get("supabase_user_id")
-        plan = notes.get("plan")
-        if not supabase_user_id or plan not in PLAN_PRICES:
-            return {"ok": True, "ignored": True, "reason": "missing notes"}
-
-        # Determine new expiry: if current expiry in future, extend; else start fresh
-        user_doc = await db.users.find_one({"supabase_user_id": supabase_user_id})
-        now = datetime.now(timezone.utc)
-        current_expiry = None
-        if user_doc and user_doc.get("subscription_active_until"):
-            try:
-                current_expiry = datetime.fromisoformat(user_doc["subscription_active_until"].replace("Z", "+00:00"))
-            except Exception:
-                current_expiry = None
-        base = current_expiry if current_expiry and current_expiry > now else now
-        new_expiry = base + timedelta(days=PLAN_DAYS)
-
-        await db.users.update_one(
-            {"supabase_user_id": supabase_user_id},
-            {
-                "$set": {
-                    "plan": plan,
-                    "subscription_active_until": new_expiry.isoformat(),
-                    "last_renewal_at": now.isoformat(),
-                    "applications_count": 0,  # reset monthly quota on renewal
-                }
-            },
-            upsert=False,
-        )
-        logger.info(f"[webhook] renewed plan={plan} user={supabase_user_id} until={new_expiry.isoformat()}")
+    # ----- 3. Everything below is best-effort. Wrap the whole block. -----
+    try:
+        # Idempotency check (best effort — if the table is missing, skip)
         if raw_event_id:
-            await db.webhook_events.update_one({"raw_event_id": raw_event_id}, {"$set": {"processed": True}})
-        return {"ok": True, "renewed": True, "until": new_expiry.isoformat()}
+            try:
+                existing = await db.webhook_events.find_one({"raw_event_id": raw_event_id, "processed": True})
+                if existing:
+                    return {"ok": True, "duplicate": True, "raw_event_id": raw_event_id}
+            except Exception as e:
+                logger.warning(f"[webhook] dedupe check skipped: {e}")
 
-    if event in ("payment.failed", "subscription.cancelled"):
-        notes = entity.get("notes") or {}
-        supabase_user_id = notes.get("supabase_user_id")
-        if not supabase_user_id and event == "subscription.cancelled":
-            sub_doc = await db.subscriptions.find_one({"razorpay_subscription_id": entity.get("id")})
-            supabase_user_id = sub_doc.get("supabase_user_id") if sub_doc else None
-        if supabase_user_id:
-            update = {"last_payment_failed_at": datetime.now(timezone.utc).isoformat()}
-            if event == "subscription.cancelled":
-                update["plan"] = "free"
-                update["subscription_active_until"] = datetime.now(timezone.utc).isoformat()
-            await db.users.update_one(
-                {"supabase_user_id": supabase_user_id},
-                {"$set": update},
+        # Best-effort event log
+        try:
+            await db.webhook_events.insert_one(
+                {
+                    "event": event,
+                    "raw_event_id": raw_event_id,
+                    "entity_id": entity.get("id"),
+                    "received_at": datetime.now(timezone.utc).isoformat(),
+                    "processed": False,
+                    "summary": {
+                        "amount": entity.get("amount"),
+                        "status": entity.get("status"),
+                        "notes": entity.get("notes", {}),
+                    },
+                }
             )
-        return {"ok": True, "noted": True}
+        except Exception as e:
+            logger.warning(f"[webhook] event log skipped: {e}")
 
-    if event == "subscription.charged":
-        sub_id = entity.get("id") or (payload.get("payload", {}).get("subscription", {}).get("entity", {}) or {}).get("id")
-        sub_doc = await db.subscriptions.find_one({"razorpay_subscription_id": sub_id}) if sub_id else None
-        supabase_user_id = (sub_doc or {}).get("supabase_user_id")
-        plan = (sub_doc or {}).get("plan")
-        if not supabase_user_id or plan not in PLAN_PRICES:
-            return {"ok": True, "ignored": True, "reason": "missing subscription mapping"}
+        # ===== payment.captured =====
+        if event == "payment.captured":
+            notes = entity.get("notes") or {}
+            supabase_user_id = notes.get("supabase_user_id")
+            plan = notes.get("plan")
+            if not supabase_user_id or plan not in PLAN_PRICES:
+                return {"ok": True, "ignored": True, "reason": "missing notes"}
 
-        user_doc = await db.users.find_one({"supabase_user_id": supabase_user_id})
-        now = datetime.now(timezone.utc)
-        current_expiry = None
-        if user_doc and user_doc.get("subscription_active_until"):
             try:
-                current_expiry = datetime.fromisoformat(user_doc["subscription_active_until"].replace("Z", "+00:00"))
-            except Exception:
-                current_expiry = None
-        base = current_expiry if current_expiry and current_expiry > now else now
-        new_expiry = base + timedelta(days=PLAN_DAYS)
-        await db.users.update_one(
-            {"supabase_user_id": supabase_user_id},
-            {
-                "$set": {
-                    "plan": plan,
-                    "subscription_active_until": new_expiry.isoformat(),
-                    "last_renewal_at": now.isoformat(),
-                    "applications_count": 0,
-                }
-            },
-        )
-        if raw_event_id:
-            await db.webhook_events.update_one({"raw_event_id": raw_event_id}, {"$set": {"processed": True}})
-        return {"ok": True, "renewed": True, "until": new_expiry.isoformat()}
+                user_doc = await db.users.find_one({"supabase_user_id": supabase_user_id})
+            except Exception as e:
+                logger.error(f"[webhook] users.find_one failed: {e}")
+                user_doc = None
 
-    return {"ok": True, "ignored": True, "event": event}
+            now = datetime.now(timezone.utc)
+            current_expiry = None
+            if user_doc and user_doc.get("subscription_active_until"):
+                try:
+                    current_expiry = datetime.fromisoformat(
+                        user_doc["subscription_active_until"].replace("Z", "+00:00")
+                    )
+                except Exception:
+                    current_expiry = None
+            base = current_expiry if current_expiry and current_expiry > now else now
+            new_expiry = base + timedelta(days=PLAN_DAYS)
+
+            try:
+                await db.users.update_one(
+                    {"supabase_user_id": supabase_user_id},
+                    {
+                        "$set": {
+                            "plan": plan,
+                            "subscription_active_until": new_expiry.isoformat(),
+                            "last_renewal_at": now.isoformat(),
+                            "applications_count": 0,
+                        }
+                    },
+                    upsert=False,
+                )
+                logger.info(f"[webhook] renewed plan={plan} user={supabase_user_id} until={new_expiry.isoformat()}")
+            except Exception as e:
+                logger.error(f"[webhook] users.update_one failed: {e}")
+
+            if raw_event_id:
+                try:
+                    await db.webhook_events.update_one(
+                        {"raw_event_id": raw_event_id}, {"$set": {"processed": True}}
+                    )
+                except Exception as e:
+                    logger.warning(f"[webhook] mark processed failed: {e}")
+            return {"ok": True, "renewed": True, "until": new_expiry.isoformat()}
+
+        # ===== payment.failed / subscription.cancelled =====
+        if event in ("payment.failed", "subscription.cancelled"):
+            notes = entity.get("notes") or {}
+            supabase_user_id = notes.get("supabase_user_id")
+            if not supabase_user_id and event == "subscription.cancelled":
+                try:
+                    sub_doc = await db.subscriptions.find_one(
+                        {"razorpay_subscription_id": entity.get("id")}
+                    )
+                    supabase_user_id = sub_doc.get("supabase_user_id") if sub_doc else None
+                except Exception as e:
+                    logger.warning(f"[webhook] subscriptions lookup failed: {e}")
+            if supabase_user_id:
+                update = {"last_payment_failed_at": datetime.now(timezone.utc).isoformat()}
+                if event == "subscription.cancelled":
+                    update["plan"] = "free"
+                    update["subscription_active_until"] = datetime.now(timezone.utc).isoformat()
+                try:
+                    await db.users.update_one(
+                        {"supabase_user_id": supabase_user_id},
+                        {"$set": update},
+                    )
+                except Exception as e:
+                    logger.error(f"[webhook] users.update_one (failed/cancelled) failed: {e}")
+            return {"ok": True, "noted": True}
+
+        # ===== subscription.charged =====
+        if event == "subscription.charged":
+            sub_id = entity.get("id") or (
+                payload.get("payload", {}).get("subscription", {}).get("entity", {}) or {}
+            ).get("id")
+            sub_doc = None
+            if sub_id:
+                try:
+                    sub_doc = await db.subscriptions.find_one({"razorpay_subscription_id": sub_id})
+                except Exception as e:
+                    logger.warning(f"[webhook] subscriptions lookup failed: {e}")
+            supabase_user_id = (sub_doc or {}).get("supabase_user_id")
+            plan = (sub_doc or {}).get("plan")
+            if not supabase_user_id or plan not in PLAN_PRICES:
+                return {"ok": True, "ignored": True, "reason": "missing subscription mapping"}
+
+            try:
+                user_doc = await db.users.find_one({"supabase_user_id": supabase_user_id})
+            except Exception:
+                user_doc = None
+            now = datetime.now(timezone.utc)
+            current_expiry = None
+            if user_doc and user_doc.get("subscription_active_until"):
+                try:
+                    current_expiry = datetime.fromisoformat(
+                        user_doc["subscription_active_until"].replace("Z", "+00:00")
+                    )
+                except Exception:
+                    current_expiry = None
+            base = current_expiry if current_expiry and current_expiry > now else now
+            new_expiry = base + timedelta(days=PLAN_DAYS)
+            try:
+                await db.users.update_one(
+                    {"supabase_user_id": supabase_user_id},
+                    {
+                        "$set": {
+                            "plan": plan,
+                            "subscription_active_until": new_expiry.isoformat(),
+                            "last_renewal_at": now.isoformat(),
+                            "applications_count": 0,
+                        }
+                    },
+                )
+            except Exception as e:
+                logger.error(f"[webhook] users.update_one (sub.charged) failed: {e}")
+            if raw_event_id:
+                try:
+                    await db.webhook_events.update_one(
+                        {"raw_event_id": raw_event_id}, {"$set": {"processed": True}}
+                    )
+                except Exception as e:
+                    logger.warning(f"[webhook] mark processed failed: {e}")
+            return {"ok": True, "renewed": True, "until": new_expiry.isoformat()}
+
+        return {"ok": True, "ignored": True, "event": event}
+
+    except Exception as e:
+        # Last-resort safety net: never bubble a 500 to Razorpay or it'll disable the webhook.
+        logger.exception(f"[webhook] unexpected error processing event={event} id={raw_event_id}: {e}")
+        return {"ok": True, "error": "internal", "event": event}
 
 
 # === Subscriptions (recurring monthly billing) ==============================

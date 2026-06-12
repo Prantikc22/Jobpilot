@@ -32,7 +32,7 @@ app = FastAPI(title="JobPilot API", version="1.0.0")
 
 # Serve built React frontend in production
 _FRONTEND_BUILD = Path(__file__).parent.parent / "frontend" / "build"
-if _FRONTEND_BUILD.exists():
+if _FRONTEND_BUILD.exists() and (_FRONTEND_BUILD / "static").exists():
     from fastapi.staticfiles import StaticFiles
     from fastapi.responses import FileResponse
 
