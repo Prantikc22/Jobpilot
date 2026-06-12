@@ -14,7 +14,7 @@ from datetime import datetime
 
 # External preview URL - CURRENTLY NOT WORKING (404 on all /api routes)
 # Using localhost for testing as external ingress is not routing /api/* to backend
-EXTERNAL_URL = "https://resume-to-offers.preview.emergentagent.com/api"
+EXTERNAL_URL = "https://repo-monitor-3.preview.emergentagent.com/api"
 BASE_URL = "http://localhost:8001/api"
 
 # Admin credentials from test_credentials.md
@@ -675,7 +675,7 @@ def test_legal_pages():
         "/about-us"
     ]
     
-    base_url = "https://resume-to-offers.preview.emergentagent.com"
+    base_url = "https://repo-monitor-3.preview.emergentagent.com"
     
     for page in legal_pages:
         log(f"Testing {page}...")
